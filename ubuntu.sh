@@ -92,9 +92,16 @@ if [ -f ~/.bash_aliases ]; then
     echo "Sourced bash_aliases into current shell"
 fi
 
-# Setup ssh sync cronjobs
-create_update_ssh_keys_script
-setup_cron_job
+# Prompt the user to set up SSH key synchronization
+echo "Do you want to set up SSH key synchronization? [Y/n]: "
+read -r response
+if [[ -z "$response" ]] || [[ "$response" =~ ^[Yy]$ ]]; then
+    create_update_ssh_keys_script
+    setup_cron_job
+else
+    echo "Skipping SSH key synchronization setup."
+fi
+
 
 echo "Ubuntu setup completed."
 
