@@ -1,10 +1,21 @@
 set nu rnu
-set pastetoggle=<F3>
+:nnoremap <F3> :set invpaste<CR>
+
+" Clang Format stuff
+let g:clang_format#style_options = {
+            \ "AccessModifierOffset" : -4,
+            \ "AllowShortIfStatementsOnASingleLine" : "true",
+            \ "AlwaysBreakTemplateDeclarations" : "true",
+            \ "Standard" : "C++11"}
+
+" map to <Leader>cf in C++ code
+autocmd FileType c,cpp,objc nnoremap <buffer><Leader>cf :<C-u>ClangFormat<CR>
+autocmd FileType c,cpp,objc vnoremap <buffer><Leader>cf :ClangFormat<CR>
 
 " Search and replace word under cursor using F4
 nnoremap <F4> :%s/<c-r><c-w>/<c-r><c-w>/gc<c-f>$F/i
 
 " set tab switching to F7 & F8 Open in new tab to <C_n>
-nnoremap <F7> :tabp
-nnoremap <F8> :tabn
+nnoremap <F7> :tabp<CR>
+nnoremap <F8> :tabn<CR>
 nnoremap <C-n> :tabe

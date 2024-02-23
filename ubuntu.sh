@@ -6,8 +6,25 @@ if [[ $(lsb_release -rs) != "22.04" ]]; then
     exit 1
 fi
 
-# Prompt for sudo password upfront and keep it alive
-sudo -v
+# Check and cache sudo credentials upfront
+check_and_cache_sudo() {
+    # Attempt to run a non-destructive command with sudo without a password prompt
+    if sudo -n true 2>/dev/null; then
+        echo "No password is required for sudo or it's already cached."
+    else
+        echo "Password is required for sudo, invoking sudo to cache credentials..."
+        # The -v option updates the user's timestamp without running a command
+        if sudo -v; then
+            echo "Sudo credentials are now cached."
+        else
+            echo "Failed to cache sudo credentials."
+            return 1
+        fi
+    fi
+    return 0
+}
+
+check_and_cache_sudo
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
 # Function to write script to keep ssh authorized keys in sync with github
