@@ -27,11 +27,6 @@ check_and_cache_sudo() {
 check_and_cache_sudo
 while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
-# Function to write script to keep ssh authorized keys in sync with github
-create_update_ssh_keys_script() {
-    cat > ~/update_ssh_keys.sh << EOF
-#!/bin/bash
-
 # Function to install dependencies using apt
 install_apt_dependencies() {
     echo "Updating package lists..."
@@ -42,6 +37,11 @@ install_apt_dependencies() {
 
     echo "All packages installed successfully."
 }
+
+# Function to write script to keep ssh authorized keys in sync with github
+create_update_ssh_keys_script() {
+    cat > ~/update_ssh_keys.sh << EOF
+#!/bin/bash
 
 # Fetch GitHub keys for tansanrao and update authorized_keys
 mkdir -p ~/.ssh
