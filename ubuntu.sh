@@ -88,6 +88,12 @@ backup_and_remove ~/.tmux.conf
 ln -s ~/.config/dotfiles/tmux/tmux.conf ~/.tmux.conf
 echo "Symlinked tmux.conf to ~/.tmux.conf"
 
+# Install tpm if not exists
+if [ ! -d "~/.tmux/plugins/tpm" ]; then
+    git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && ~/.tmux/plugins/tpm/bin/install_plugins
+fi
+
+
 # Backing up existing .vimrc
 backup_and_remove ~/.vimrc
 
