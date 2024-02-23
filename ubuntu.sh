@@ -21,7 +21,6 @@ check_and_cache_sudo() {
             return 1
         fi
     fi
-    return 0
 }
 
 check_and_cache_sudo
