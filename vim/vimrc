@@ -145,3 +145,14 @@ set showmatch
 
 " Turn on line numbers
 set nu rnu
+
+" Move through wrapped lines with arrows
+nnoremap <Down> gj
+nnoremap <Up> gk
+vnoremap <Down> gj
+vnoremap <Up> gk
+inoremap <Down> <C-o>gj
+inoremap <Up> <C-o>gk
+
+" Use <F3> to switch between paste mode
+set pastetoggle=<F3>
