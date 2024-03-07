@@ -17,9 +17,9 @@ ssh-jump() {
   fi
 
   # Grab hosts from arguments
-  user_host=$1
+  host=$1
   jump_host=$2
 
   # Execute ssh command
-  ssh -A -J $jumphost $host
+  ssh -A -J $jump_host $host
 }
