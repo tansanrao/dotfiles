@@ -7,3 +7,19 @@ fixssh() {
 rm_keys() {
   ssh-keygen -f "/home/tansanrao/.ssh/known_hosts" -R $1
 }
+
+ssh-jump() {
+  # Help message
+  if [ $# -lt 2 ] || [ $# -gt 3 ]; then
+    echo "Usage: ssh-jump <username>@<host> <jumphost>"
+    echo "or:    ssh-jump <host> <jumphost>"
+    return 1
+  fi
+
+  # Grab hosts from arguments
+  user_host=$1
+  jump_host=$2
+
+  # Execute ssh command
+  ssh -A -J $jumphost $host
+}
