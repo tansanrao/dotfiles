@@ -23,3 +23,9 @@ ssh-jump() {
   # Execute ssh command
   ssh -A -J $jump_host $host
 }
+
+# Helper to list full trust chain for https server.
+function seecert () {
+  nslookup $1
+  (openssl s_client -showcerts -servername $1 -connect $1:443 <<< "Q" | openssl x509 -text | grep -iA2 "Validity")
+}
