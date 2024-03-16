@@ -14,7 +14,7 @@ set backspace=indent,eol,start
 set history=50		" keep 50 lines of command line history
 set ruler		" show the cursor position all the time
 set showcmd		" display incomplete commands
-set textwidth=70
+set textwidth=120
 
 " Jeff's cscope settings
 if has("cscope")
@@ -82,8 +82,8 @@ if has("autocmd")
   augroup vimrcEx
   au!
 
-  " For all text files set 'textwidth' to 78 characters.
-  autocmd FileType text setlocal textwidth=70
+  " For all text files set 'textwidth' to 120 characters.
+  autocmd FileType text setlocal textwidth=120
 
   " When editing a file, always jump to the last known cursor position.
   " Don't do it when the position is invalid or when inside an event handler
@@ -119,9 +119,9 @@ if &t_Co > 1
 endif
 
 " Set tab settings appropriate for source code editing.
-set tabstop=8
-set shiftwidth=8
-"set expandtab
+set tabstop=4
+set shiftwidth=4
+set expandtab
 
 " Enable incremental search.
 set incsearch
