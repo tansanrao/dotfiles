@@ -29,3 +29,23 @@ function seecert () {
   nslookup $1
   (openssl s_client -showcerts -servername $1 -connect $1:443 <<< "Q" | openssl x509 -text | grep -iA2 "Validity")
 }
+
+# CS3754 helpers
+function 3754_unzip_all () {
+    find . -name "*.zip" -exec sh -c 'unzip -d "${1%/*}" "$1"' _ {} \;
+}
+
+function 3754_gather_xlsx () {
+        if [ $# -eq 0 ]; then
+        echo "Usage: gather_xlsx <destination_directory>"
+        return 1
+    fi
+
+    dest_dir="$1"
+    
+    # Create the destination directory if it doesn't exist
+    mkdir -p "$dest_dir"
+
+    # Find and copy all .xlsx files to the specified destination directory
+    find . -name "*.xlsx" -exec cp {} "$dest_dir" \;
+}
