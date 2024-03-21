@@ -32,7 +32,16 @@ install_apt_dependencies() {
     sudo apt-get update
 
     echo "Installing required packages..."
-    sudo apt-get install -y vim tmux curl wget htop
+    sudo apt-get install -y vim \
+        tmux \
+        curl \
+        wget \
+        htop \
+        build-essential \
+        libssl-dev \
+        clang \
+        clangd \
+        bear 
 
     echo "All packages installed successfully."
 }
@@ -65,8 +74,6 @@ setup_cron_job() {
     echo "Cron job set up to update SSH keys daily."
 }
 
-
-
 # Function to backup and remove existing file/directory
 backup_and_remove() {
     local target=$1
@@ -77,7 +84,7 @@ backup_and_remove() {
     fi
 }
 
-# Call the function to install apt dependencies
+# Install dependencies
 install_apt_dependencies
 
 # Backing up existing tmux files
@@ -92,7 +99,6 @@ echo "Symlinked tmux.conf to ~/.tmux.conf"
 if [ ! -d "~/.tmux/plugins/tpm" ]; then
     git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm && ~/.tmux/plugins/tpm/bin/install_plugins
 fi
-
 
 # Backing up existing .vimrc
 backup_and_remove ~/.vimrc
@@ -124,6 +130,4 @@ else
     echo "Skipping SSH key synchronization setup."
 fi
 
-
 echo "Ubuntu setup completed."
-

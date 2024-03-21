@@ -5,99 +5,84 @@ set nocompatible
 " allow backspacing over everything in insert mode
 set backspace=indent,eol,start
 
-"if has("vms")
-"  set nobackup		" do not keep a backup file, use versions instead
-"else
-"  set backup		" keep a backup file
-"endif
+set history=50          " keep 50 lines of command line history
+set ruler               " show the cursor position all the time
+set showcmd             " display incomplete commands
 
-set history=50		" keep 50 lines of command line history
-set ruler		" show the cursor position all the time
-set showcmd		" display incomplete commands
-set textwidth=120
+" When editing a file, always jump to the last known cursor position.
+" Don't do it when the position is invalid or when inside an event handler
+" (happens when dropping a file on gvim).
+autocmd BufReadPost *
+                        \ if line("'\"") > 0 && line("'\"") <= line("$") |
+                        \   exe "normal g`\"" |
+                        \ endif
 
-" Jeff's cscope settings
-if has("cscope")
-	set csprg=/usr/bin/cscope
-	" change this to 1 to search ctags DBs first
-	set csto=0
-	set cst
-	set nocsverb
-	" add any database in current directory
-	if filereadable("cscope.out")
-	    cs add cscope.out
-	" else add database pointed to by environment
-	elseif $CSCOPE_DB != ""
-	    cs add $CSCOPE_DB
-	endif
-	set csverb
 
-	" Using 'CTRL-\' then a search type makes the vim window
-	" "shell-out", with search results displayed on the bottom
-
-	nmap <C-\>s :cs find s <C-R>=expand("<cword>")<CR><CR>
-	nmap <C-\>g :cs find g <C-R>=expand("<cword>")<CR><CR>
-	nmap <C-\>c :cs find c <C-R>=expand("<cword>")<CR><CR>
-	nmap <C-\>t :cs find t <C-R>=expand("<cword>")<CR><CR>
-	nmap <C-\>e :cs find e <C-R>=expand("<cword>")<CR><CR>
-	nmap <C-\>f :cs find f <C-R>=expand("<cfile>")<CR><CR>
-	nmap <C-\>i :cs find i ^<C-R>=expand("<cfile>")<CR>$<CR>
-	nmap <C-\>d :cs find d <C-R>=expand("<cword>")<CR><CR>
-
-	" Using 'CTRL-spacebar' then a search type makes the vim window
-	" split horizontally, with search result displayed in
-	" the new window.
-
-	nmap <C-[>s :scs find s <C-R>=expand("<cword>")<CR><CR>
-	nmap <C-[>g :scs find g <C-R>=expand("<cword>")<CR><CR>
-	nmap <C-[>c :scs find c <C-R>=expand("<cword>")<CR><CR>
-	nmap <C-[>t :scs find t <C-R>=expand("<cword>")<CR><CR>
-	nmap <C-[>e :scs find e <C-R>=expand("<cword>")<CR><CR>
-	nmap <C-[>f :scs find f <C-R>=expand("<cfile>")<CR><CR>
-	nmap <C-[>i :scs find i ^<C-R>=expand("<cfile>")<CR>$<CR>
-	nmap <C-[>d :scs find d <C-R>=expand("<cword>")<CR><CR>
-
-	" Hitting CTRL-space *twice* before the search type does a vertical
-	" split instead of a horizontal one
-
-	nmap <C-[><C-[>s :vert scs find s <C-R>=expand("<cword>")<CR><CR>
-	nmap <C-[><C-[>g :vert scs find g <C-R>=expand("<cword>")<CR><CR>
-	nmap <C-[><C-[>c :vert scs find c <C-R>=expand("<cword>")<CR><CR>
-	nmap <C-[><C-[>t :vert scs find t <C-R>=expand("<cword>")<CR><CR>
-	nmap <C-[><C-[>e :vert scs find e <C-R>=expand("<cword>")<CR><CR>
-	nmap <C-[><C-[>i :vert scs find i ^<C-R>=expand("<cfile>")<CR>$<CR>
-	nmap <C-[><C-[>d :vert scs find d <C-R>=expand("<cword>")<CR><CR>
+" vim-plug setup
+let data_dir = has('nvim') ? stdpath('data') . '/site' : '~/.vim'
+if empty(glob(data_dir . '/autoload/plug.vim'))
+        silent execute '!curl -fLo '.data_dir.'/autoload/plug.vim --create-dirs  https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+        autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
 endif
 
-" Only do this part when compiled with support for autocommands.
-if has("autocmd")
+call plug#begin()
+        Plug 'prabirshrestha/async.vim'
+        Plug 'prabirshrestha/vim-lsp'
+        Plug 'vim-scripts/VimCompletesMe'
+        Plug 'rhysd/vim-clang-format'
+call plug#end()
 
-  " Enable file type detection.
-  " Use the default filetype settings, so that mail gets 'tw' set to 72,
-  " 'cindent' is on in C files, etc.
-  " Also load indent files, to automatically do language-dependent indenting.
-  filetype plugin indent on
+" clang-format config
+let g:clang_format#style_options = {
+            \ "AccessModifierOffset" : -4,
+            \ "AllowShortIfStatementsOnASingleLine" : "true",
+            \ "AlwaysBreakTemplateDeclarations" : "true",
+            \ "Standard" : "C++11"}
 
-  " Put these in an autocmd group, so that we can delete them easily.
-  augroup vimrcEx
-  au!
+" clangd with vim-lsp
+if executable('clangd')
+    augroup lsp_clangd
+        autocmd!
+        autocmd User lsp_setup call lsp#register_server({
+                    \ 'name': 'clangd',
+                    \ 'cmd': {server_info->['clangd']},
+                    \ 'whitelist': ['c', 'cc', 'cpp', 'objc', 'objcpp'],
+                    \ })
+        autocmd FileType c setlocal omnifunc=lsp#complete
+        autocmd FileType cc setlocal omnifunc=lsp#complete
+        autocmd FileType cpp setlocal omnifunc=lsp#complete
+        autocmd FileType objc setlocal omnifunc=lsp#complete
+        autocmd FileType objcpp setlocal omnifunc=lsp#complete
+    augroup end
 
-  " For all text files set 'textwidth' to 120 characters.
-  autocmd FileType text setlocal textwidth=120
+endif
 
-  " When editing a file, always jump to the last known cursor position.
-  " Don't do it when the position is invalid or when inside an event handler
-  " (happens when dropping a file on gvim).
-  autocmd BufReadPost *
-    \ if line("'\"") > 0 && line("'\"") <= line("$") |
-    \   exe "normal g`\"" |
-    \ endif
+function! s:on_lsp_buffer_enabled() abort
+    setlocal omnifunc=lsp#complete
+    setlocal signcolumn=yes
+    if exists('+tagfunc') | setlocal tagfunc=lsp#tagfunc | endif
+    nmap <buffer> gd <plug>(lsp-definition)
+    nmap <buffer> gs <plug>(lsp-document-symbol-search)
+    nmap <buffer> gS <plug>(lsp-workspace-symbol-search)
+    nmap <buffer> gr <plug>(lsp-references)
+    nmap <buffer> gi <plug>(lsp-implementation)
+    nmap <buffer> gt <plug>(lsp-type-definition)
+    nmap <buffer> <leader>rn <plug>(lsp-rename)
+    nmap <buffer> [g <plug>(lsp-previous-diagnostic)
+    nmap <buffer> ]g <plug>(lsp-next-diagnostic)
+    nmap <buffer> K <plug>(lsp-hover)
+    nnoremap <buffer> <expr><c-f> lsp#scroll(+4)
+    nnoremap <buffer> <expr><c-d> lsp#scroll(-4)
 
-  augroup END
-else
-  set autoindent
-endif " has("autocmd")
+    let g:lsp_format_sync_timeout = 1000
+    autocmd! BufWritePre *.rs,*.go call execute('LspDocumentFormatSync')
 
+    " refer to doc to add more commands
+endfunction
+
+" map to <Leader>cf in C++ code
+autocmd FileType c,cc,cpp,objc,objcpp nnoremap <buffer><Leader>cf :<C-u>ClangFormat<CR>
+autocmd FileType c,cc,cpp,objc,objcpp vnoremap <buffer><Leader>cf :ClangFormat<CR>
 
 " Personal configs
 " Set quick command mode from normal mode.
@@ -109,25 +94,16 @@ map S ;w<enter>
 " Set quick visual folder browsing.
 map T ;edit ./<enter>
 
-" Indent a block of code.
-map e ;s/^/    /<enter>
-map E ;s/^    //<enter>
-
-" Enable the syntax highlighting on enabled terminals.
-if &t_Co > 1
-   syntax enable
-endif
-
 " Set tab settings appropriate for source code editing.
-set tabstop=4
-set shiftwidth=4
-set expandtab
+set tabstop=8
+set shiftwidth=8
+"set expandtab
 
 " Enable incremental search.
 set incsearch
 
 " Enable fast window switching.
-map t ;wincmd 
+map t ;wincmd
 
 " Buffer manipulation commands
 map H ;tabp<enter>
@@ -143,8 +119,9 @@ set autowrite
 " Turn on paren highlighting.
 set showmatch
 
-" Turn on line numbers
+" Turn on and line numbers
 set nu rnu
+nnoremap <F2> :set number! relativenumber!<CR>
 
 " Move through wrapped lines with arrows
 nnoremap <Down> gj
