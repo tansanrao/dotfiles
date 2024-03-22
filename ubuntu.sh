@@ -41,7 +41,8 @@ install_apt_dependencies() {
         libssl-dev \
         clang \
         clangd \
-        bear 
+        bear \
+        clang-format
 
     echo "All packages installed successfully."
 }
