@@ -2,6 +2,9 @@
 " This must be first, because it changes other options as a side effect.
 set nocompatible
 
+" Give me all the colors!
+set termguicolors
+
 " allow backspacing over everything in insert mode
 set backspace=indent,eol,start
 
@@ -31,8 +34,13 @@ call plug#begin()
         Plug 'vim-scripts/VimCompletesMe'
         Plug 'rhysd/vim-clang-format'
         Plug 'vim-airline/vim-airline'
+	Plug 'catppuccin/vim', { 'as': 'catppuccin' }
 call plug#end()
 
+" use catppuccin colorscheme
+colorscheme catppuccin_mocha
+
+" airline config
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#whitespace#mixed_indent_algo = 1
 
