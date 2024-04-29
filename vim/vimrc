@@ -5,6 +5,9 @@ set nocompatible
 " Give me all the colors!
 set termguicolors
 
+" use utf8
+set encoding=utf8
+
 " allow backspacing over everything in insert mode
 set backspace=indent,eol,start
 
@@ -16,25 +19,26 @@ set showcmd             " display incomplete commands
 " Don't do it when the position is invalid or when inside an event handler
 " (happens when dropping a file on gvim).
 autocmd BufReadPost *
-                        \ if line("'\"") > 0 && line("'\"") <= line("$") |
-                        \   exe "normal g`\"" |
-                        \ endif
+			\ if line("'\"") > 0 && line("'\"") <= line("$") |
+			\   exe "normal g`\"" |
+			\ endif
 
 
 " vim-plug setup
 let data_dir = has('nvim') ? stdpath('data') . '/site' : '~/.vim'
 if empty(glob(data_dir . '/autoload/plug.vim'))
-        silent execute '!curl -fLo '.data_dir.'/autoload/plug.vim --create-dirs  https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
-        autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+	silent execute '!curl -fLo '.data_dir.'/autoload/plug.vim --create-dirs  https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+	autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
 endif
 
 call plug#begin()
-        Plug 'prabirshrestha/async.vim'
-        Plug 'prabirshrestha/vim-lsp'
-        Plug 'vim-scripts/VimCompletesMe'
-        Plug 'rhysd/vim-clang-format'
-        Plug 'vim-airline/vim-airline'
-	Plug 'catppuccin/vim', { 'as': 'catppuccin' }
+Plug 'prabirshrestha/async.vim'
+Plug 'prabirshrestha/vim-lsp'
+Plug 'vim-scripts/VimCompletesMe'
+Plug 'rhysd/vim-clang-format'
+Plug 'vim-airline/vim-airline'
+Plug 'catppuccin/vim', { 'as': 'catppuccin' }
+Plug 'lervag/vimtex', { 'tag': 'v2.15' }
 call plug#end()
 
 " use catppuccin colorscheme
@@ -46,56 +50,56 @@ let g:airline#extensions#whitespace#mixed_indent_algo = 1
 
 " clang-format config
 let g:clang_format#style_options = {
-            \ "AccessModifierOffset" : -4,
-            \ "AllowShortIfStatementsOnASingleLine" : "true",
-            \ "AlwaysBreakTemplateDeclarations" : "true",
-            \ "Standard" : "C++11"}
+			\ "AccessModifierOffset" : -4,
+			\ "AllowShortIfStatementsOnASingleLine" : "true",
+			\ "AlwaysBreakTemplateDeclarations" : "true",
+			\ "Standard" : "C++11"}
 
 " clangd with vim-lsp
 if executable('clangd')
-    augroup lsp_clangd
-        autocmd!
-        autocmd User lsp_setup call lsp#register_server({
-                    \ 'name': 'clangd',
-                    \ 'cmd': {server_info->['clangd']},
-                    \ 'whitelist': ['c', 'cc', 'cpp', 'objc', 'objcpp'],
-                    \ })
-        autocmd FileType c setlocal omnifunc=lsp#complete
-        autocmd FileType cc setlocal omnifunc=lsp#complete
-        autocmd FileType cpp setlocal omnifunc=lsp#complete
-        autocmd FileType objc setlocal omnifunc=lsp#complete
-        autocmd FileType objcpp setlocal omnifunc=lsp#complete
-    augroup end
+	augroup lsp_clangd
+		autocmd!
+		autocmd User lsp_setup call lsp#register_server({
+					\ 'name': 'clangd',
+					\ 'cmd': {server_info->['clangd']},
+					\ 'whitelist': ['c', 'cc', 'cpp', 'objc', 'objcpp'],
+					\ })
+		autocmd FileType c setlocal omnifunc=lsp#complete
+		autocmd FileType cc setlocal omnifunc=lsp#complete
+		autocmd FileType cpp setlocal omnifunc=lsp#complete
+		autocmd FileType objc setlocal omnifunc=lsp#complete
+		autocmd FileType objcpp setlocal omnifunc=lsp#complete
+	augroup end
 
 endif
 
 function! s:on_lsp_buffer_enabled() abort
-    setlocal omnifunc=lsp#complete
-    setlocal signcolumn=yes
-    if exists('+tagfunc') | setlocal tagfunc=lsp#tagfunc | endif
-    nmap <buffer> gd <plug>(lsp-definition)
-    nmap <buffer> gs <plug>(lsp-document-symbol-search)
-    nmap <buffer> gS <plug>(lsp-workspace-symbol-search)
-    nmap <buffer> gr <plug>(lsp-references)
-    nmap <buffer> gi <plug>(lsp-implementation)
-    nmap <buffer> gt <plug>(lsp-type-definition)
-    nmap <buffer> <leader>rn <plug>(lsp-rename)
-    nmap <buffer> [g <plug>(lsp-previous-diagnostic)
-    nmap <buffer> ]g <plug>(lsp-next-diagnostic)
-    nmap <buffer> K <plug>(lsp-hover)
-    nnoremap <buffer> <expr><c-f> lsp#scroll(+4)
-    nnoremap <buffer> <expr><c-d> lsp#scroll(-4)
+	setlocal omnifunc=lsp#complete
+	setlocal signcolumn=yes
+	if exists('+tagfunc') | setlocal tagfunc=lsp#tagfunc | endif
+	nmap <buffer> gd <plug>(lsp-definition)
+	nmap <buffer> gs <plug>(lsp-document-symbol-search)
+	nmap <buffer> gS <plug>(lsp-workspace-symbol-search)
+	nmap <buffer> gr <plug>(lsp-references)
+	nmap <buffer> gi <plug>(lsp-implementation)
+	nmap <buffer> gt <plug>(lsp-type-definition)
+	nmap <buffer> <leader>rn <plug>(lsp-rename)
+	nmap <buffer> [g <plug>(lsp-previous-diagnostic)
+	nmap <buffer> ]g <plug>(lsp-next-diagnostic)
+	nmap <buffer> K <plug>(lsp-hover)
+	nnoremap <buffer> <expr><c-f> lsp#scroll(+4)
+	nnoremap <buffer> <expr><c-d> lsp#scroll(-4)
 
-    let g:lsp_format_sync_timeout = 1000
-    autocmd! BufWritePre *.rs,*.go call execute('LspDocumentFormatSync')
+	let g:lsp_format_sync_timeout = 1000
+	autocmd! BufWritePre *.rs,*.go call execute('LspDocumentFormatSync')
 
-    " refer to doc to add more commands
+	" refer to doc to add more commands
 endfunction
 
 augroup lsp_install
-    au!
-    " call s:on_lsp_buffer_enabled only for languages that has the server registered.
-    autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
+	au!
+	" call s:on_lsp_buffer_enabled only for languages that has the server registered.
+	autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
 augroup END
 
 " map to <Leader>cf in C++ code
@@ -106,11 +110,8 @@ autocmd FileType c,cc,cpp,objc,objcpp vnoremap <buffer><Leader>cf :ClangFormat<C
 " Set quick command mode from normal mode.
 map ; :
 
-" Set quick save from command mode.
-map S ;w<enter>
-
-" Set quick visual folder browsing.
-map T ;edit ./<enter>
+	" Set quick visual folder browsing.
+	map T ;edit ./<enter>
 
 " Set tab settings appropriate for source code editing.
 set tabstop=8
@@ -151,3 +152,19 @@ inoremap <Up> <C-o>gk
 
 " Use <F3> to switch between paste mode
 set pastetoggle=<F3>
+
+" This is necessary for VimTeX to load properly. The 'indent' is optional.
+filetype plugin indent on
+
+" This enables Vim's syntax-related features.
+syntax enable
+
+" vimtex stuff for mac
+if has('unix')
+	if has('mac')
+		let g:vimtex_view_method = 'skim' " Choose which program to use to view PDF file
+		let g:vimtex_view_skim_sync = 1 " Value 1 allows forward search after every successful compilation
+		let g:vimtex_view_skim_activate = 1 " Value 1 allows change focus to skim after command `:VimtexView` is given
+	endif
+endif
+
