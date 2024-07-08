@@ -37,12 +37,10 @@ Plug 'prabirshrestha/vim-lsp'
 Plug 'vim-scripts/VimCompletesMe'
 Plug 'rhysd/vim-clang-format'
 Plug 'vim-airline/vim-airline'
-Plug 'catppuccin/vim', { 'as': 'catppuccin' }
 Plug 'lervag/vimtex', { 'tag': 'v2.15' }
 call plug#end()
 
 " use catppuccin colorscheme
-colorscheme catppuccin_mocha
 
 " airline config
 let g:airline#extensions#tabline#enabled = 1
