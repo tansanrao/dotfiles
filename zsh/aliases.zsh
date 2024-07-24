@@ -5,7 +5,7 @@ function fixssh() {
 
 # remove from known_hosts helper for when VMs are torn down and rebuilt regularly
 function rmkeys() {
-	ssh-keygen -f "/home/tansanrao/.ssh/known_hosts" -R $1
+	ssh-keygen -f "$HOME/.ssh/known_hosts" -R $1
 }
 
 function jump() {

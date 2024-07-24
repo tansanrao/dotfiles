@@ -14,3 +14,6 @@ zsh -c zsh/init.zsh
 
 # Set default settings
 zsh -c mac/set-defaults.zsh
+
+# Install atuin
+zsh -c atuin/init.zsh
