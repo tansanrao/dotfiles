@@ -6,7 +6,8 @@ install_git_ubuntu() {
     sudo apt-get install -y git
 }
 
-# Function to check for Git and install Git on macOS through Xcode Command Line Tools if necessary
+# Function to check for Git and install Git on macOS 
+# through Xcode Command Line Tools if necessary
 install_git_macos() {
     if ! type git > /dev/null 2>&1; then
         echo "Git not found. Installing Xcode Command Line Tools..."
