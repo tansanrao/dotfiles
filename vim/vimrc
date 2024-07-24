@@ -40,8 +40,6 @@ Plug 'vim-airline/vim-airline'
 Plug 'lervag/vimtex', { 'tag': 'v2.15' }
 call plug#end()
 
-" use catppuccin colorscheme
-
 " airline config
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#whitespace#mixed_indent_algo = 1
@@ -96,13 +94,16 @@ endfunction
 
 augroup lsp_install
 	au!
-	" call s:on_lsp_buffer_enabled only for languages that has the server registered.
+	" call s:on_lsp_buffer_enabled only for languages 
+	" that has the server registered.
 	autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
 augroup END
 
 " map to <Leader>cf in C++ code
-autocmd FileType c,cc,cpp,objc,objcpp nnoremap <buffer><Leader>cf :<C-u>ClangFormat<CR>
-autocmd FileType c,cc,cpp,objc,objcpp vnoremap <buffer><Leader>cf :ClangFormat<CR>
+autocmd FileType c,cc,cpp,objc,objcpp \
+	nnoremap <buffer><Leader>cf :<C-u>ClangFormat<CR>
+autocmd FileType c,cc,cpp,objc,objcpp \
+	vnoremap <buffer><Leader>cf :ClangFormat<CR>
 
 " Personal configs
 " Set quick command mode from normal mode.
@@ -136,9 +137,9 @@ set autowrite
 " Turn on paren highlighting.
 set showmatch
 
-" Turn on and line numbers
-set nu rnu
-nnoremap <F2> :set number! relativenumber!<CR>
+" Turn on line numbers
+set nu
+nnoremap <F2> :set number!<CR>
 
 " Move through wrapped lines with arrows
 nnoremap <Down> gj
@@ -160,9 +161,14 @@ syntax enable
 " vimtex stuff for mac
 if has('unix')
 	if has('mac')
-		let g:vimtex_view_method = 'skim' " Choose which program to use to view PDF file
-		let g:vimtex_view_skim_sync = 1 " Value 1 allows forward search after every successful compilation
-		let g:vimtex_view_skim_activate = 1 " Value 1 allows change focus to skim after command `:VimtexView` is given
+		" Choose which program to use to view PDF file
+		let g:vimtex_view_method = 'skim' 
+		" allow forward search after every successful compilation
+		let g:vimtex_view_skim_sync = 1 
+		" allow change focus to skim after command `:VimtexView`
+		let g:vimtex_view_skim_activate = 1 
 	endif
 endif
 
+" set colorcolumn for line width guide
+set colorcolumn=81
