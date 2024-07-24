@@ -43,3 +43,9 @@ fi
 
 # Setup zsh
 zsh -c zsh/init.zsh
+
+# Setup atuin
+zsh -c atuin/init.zsh
+
+# Setup vim
+zsh -c vim/init.zsh

@@ -17,3 +17,6 @@ zsh -c mac/set-defaults.zsh
 
 # Install atuin
 zsh -c atuin/init.zsh
+
+# Setup vim
+zsh -c vim/init.zsh
