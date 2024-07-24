@@ -124,7 +124,7 @@
         }
       },
       "zed": {
-        "version": "0.144.4",
+        "version": "0.145.1",
         "options": {
           "full_name": "zed",
           "args": {

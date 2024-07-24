@@ -113,9 +113,5 @@ if [[ -f "$HOME/.atuin/bin/env" ]]; then
 	source "$HOME/.atuin/bin/env"
 fi
 
-if ! command -v atuin &> /dev/null
-then
-	eval "$(atuin init zsh)"
-fi
+eval "$(atuin init zsh)"
 
-. "$HOME/.atuin/bin/env"
