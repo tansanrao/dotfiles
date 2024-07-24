@@ -111,7 +111,7 @@ prompt pure
 # load atuin if exists
 if [[ -f "$HOME/.atuin/bin/env" ]]; then
 	source "$HOME/.atuin/bin/env"
+	eval "$(atuin init zsh)"
 fi
 
-eval "$(atuin init zsh)"
 
