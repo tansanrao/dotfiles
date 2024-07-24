@@ -38,3 +38,5 @@ defaults write com.apple.Safari.plist \
 	"com.apple.Safari.ContentPageGroupIdentifier.WebKit2DeveloperExtrasEnabled" \
 	-bool true
 defaults write NSGlobalDomain WebKitDeveloperExtras -bool true
+
+echo "mac defaults setup complete."
