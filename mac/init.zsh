@@ -23,3 +23,6 @@ zsh -c vim/init.zsh
 
 # Setup tmux
 zsh -c tmux/init.zsh
+
+# Setup taskfile
+zsh -c task/init.zsh

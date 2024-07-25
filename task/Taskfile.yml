@@ -1,0 +1,9 @@
+version: '3'
+
+tasks:
+  default: task --list-all
+
+  dotfiles:update:
+    cmd: git pull
+    desc: update dotfiles repo
+    dir: ~/.config/dotfiles/

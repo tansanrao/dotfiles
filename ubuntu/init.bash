@@ -52,3 +52,4 @@ zsh -c tmux/init.zsh
 
 # Setup task
 sudo snap install task --classic
+zsh -c task/init.zsh
