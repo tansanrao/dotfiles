@@ -1,5 +1,20 @@
 #!/bin/zsh
 
+# Function to prompt for sudo and keep it alive
+keep_sudo_alive() {
+  while true; do
+    sudo -v
+    sleep 50
+    kill -0 "$$" || exit
+  done &
+}
+
+# Prompt for sudo access initially
+sudo -v
+
+# Start the background process to keep sudo alive
+keep_sudo_alive
+
 # Install homebrew
 zsh -c homebrew/install.zsh
 

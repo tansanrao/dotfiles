@@ -9,3 +9,7 @@ else
   echo "Taskfile.yml is not correctly symlinked. Creating symlink..."
   ln -sf "$TASKFILE_TARGET" "$TASKFILE_LINK"
 fi
+
+# Pull zsh completions
+sudo curl https://raw.githubusercontent.com/go-task/task/main/completion/zsh/_task \
+	-o /usr/local/share/zsh/site-functions/_task
