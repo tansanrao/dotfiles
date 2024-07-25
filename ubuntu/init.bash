@@ -24,9 +24,6 @@ sudo apt-get install --fix-missing -y zsh build-essential vim tmux curl clang \
 	clangd bear clang-format lld llvm ccache cmake strace bpftrace gdb \
 	xz-utils
 
-# Install QEMU stuff
-sudo apt-get install --fix-missing -y qemu-kvm libvirt-clients libvirt-daemon-system bridge-utils virtinst libvirt-daemon attr
-
 # Cleanup
 sudo apt-get dist-clean
 
@@ -52,3 +49,6 @@ zsh -c vim/init.zsh
 
 # Setup tmux
 zsh -c tmux/init.zsh
+
+# Setup task
+sudo snap install task --classic
