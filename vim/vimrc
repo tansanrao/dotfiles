@@ -100,10 +100,10 @@ augroup lsp_install
 augroup END
 
 " map to <Leader>cf in C++ code
-autocmd FileType c,cc,cpp,objc,objcpp \
-	nnoremap <buffer><Leader>cf :<C-u>ClangFormat<CR>
-autocmd FileType c,cc,cpp,objc,objcpp \
-	vnoremap <buffer><Leader>cf :ClangFormat<CR>
+autocmd FileType c,cc,cpp,objc,objcpp
+	\ nnoremap <buffer><Leader>cf :<C-u>ClangFormat<CR>
+autocmd FileType c,cc,cpp,objc,objcpp
+	\ vnoremap <buffer><Leader>cf :ClangFormat<CR>
 
 " Personal configs
 " Set quick command mode from normal mode.
