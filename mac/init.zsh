@@ -20,3 +20,6 @@ zsh -c atuin/init.zsh
 
 # Setup vim
 zsh -c vim/init.zsh
+
+# Setup tmux
+zsh -c tmux/init.zsh
