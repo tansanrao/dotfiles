@@ -25,7 +25,7 @@ function jump() {
 
 	jump_string=${jump_string%,}  # Remove trailing comma
 
-	ssh -J $jump_string $last_host
+	ssh -A -J $jump_string $last_host
 }
 
 # Helper to list full trust chain for https server.
