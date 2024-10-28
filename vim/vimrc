@@ -32,101 +32,78 @@ if empty(glob(data_dir . '/autoload/plug.vim'))
 endif
 
 call plug#begin()
+" LSP support
 Plug 'prabirshrestha/async.vim'
 Plug 'prabirshrestha/vim-lsp'
-Plug 'vim-scripts/VimCompletesMe'
-Plug 'rhysd/vim-clang-format'
+Plug 'prabirshrestha/asyncomplete.vim'
+Plug 'prabirshrestha/asyncomplete-lsp.vim'
+
+" File Explorer
+Plug 'preservim/nerdtree'
+
+" Fuzzy Finder
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'junegunn/fzf.vim'
+
+" Misc
 Plug 'vim-airline/vim-airline'
-Plug 'lervag/vimtex', { 'tag': 'v2.15' }
 call plug#end()
 
 " airline config
 let g:airline#extensions#tabline#enabled = 1
 let g:airline#extensions#whitespace#mixed_indent_algo = 1
 
-" clang-format config
-let g:clang_format#style_options = {
-			\ "AccessModifierOffset" : -4,
-			\ "AllowShortIfStatementsOnASingleLine" : "true",
-			\ "AlwaysBreakTemplateDeclarations" : "true",
-			\ "Standard" : "C++11"}
-
-" clangd with vim-lsp
+" LSP Configuration
 if executable('clangd')
-	augroup lsp_clangd
-		autocmd!
-		autocmd User lsp_setup call lsp#register_server({
-					\ 'name': 'clangd',
-					\ 'cmd': {server_info->['clangd']},
-					\ 'whitelist': ['c', 'cc', 'cpp', 'objc', 'objcpp'],
-					\ })
-		autocmd FileType c setlocal omnifunc=lsp#complete
-		autocmd FileType cc setlocal omnifunc=lsp#complete
-		autocmd FileType cpp setlocal omnifunc=lsp#complete
-		autocmd FileType objc setlocal omnifunc=lsp#complete
-		autocmd FileType objcpp setlocal omnifunc=lsp#complete
-	augroup end
-
+    au User lsp_setup call lsp#register_server({
+        \ 'name': 'clangd',
+        \ 'cmd': {server_info->['clangd', '--background-index']},
+        \ 'whitelist': ['c', 'cpp', 'objc', 'objcpp'],
+        \ })
 endif
 
 function! s:on_lsp_buffer_enabled() abort
-	setlocal omnifunc=lsp#complete
-	setlocal signcolumn=yes
-	if exists('+tagfunc') | setlocal tagfunc=lsp#tagfunc | endif
-	nmap <buffer> gd <plug>(lsp-definition)
-	nmap <buffer> gs <plug>(lsp-document-symbol-search)
-	nmap <buffer> gS <plug>(lsp-workspace-symbol-search)
-	nmap <buffer> gr <plug>(lsp-references)
-	nmap <buffer> gi <plug>(lsp-implementation)
-	nmap <buffer> gt <plug>(lsp-type-definition)
-	nmap <buffer> <leader>rn <plug>(lsp-rename)
-	nmap <buffer> [g <plug>(lsp-previous-diagnostic)
-	nmap <buffer> ]g <plug>(lsp-next-diagnostic)
-	nmap <buffer> K <plug>(lsp-hover)
-	nnoremap <buffer> <expr><c-f> lsp#scroll(+4)
-	nnoremap <buffer> <expr><c-d> lsp#scroll(-4)
-
-	let g:lsp_format_sync_timeout = 1000
-	autocmd! BufWritePre *.rs,*.go call execute('LspDocumentFormatSync')
-
-	" refer to doc to add more commands
+    setlocal omnifunc=lsp#complete
+    setlocal signcolumn=yes
+    if exists('+tagfunc') | setlocal tagfunc=lsp#tagfunc | endif
+    nmap <buffer> gd <plug>(lsp-definition)
+    nmap <buffer> gr <plug>(lsp-references)
+    nmap <buffer> gi <plug>(lsp-implementation)
+    nmap <buffer> gt <plug>(lsp-type-definition)
+    nmap <buffer> <leader>rn <plug>(lsp-rename)
+    nmap <buffer> [g <plug>(lsp-previous-diagnostic)
+    nmap <buffer> ]g <plug>(lsp-next-diagnostic)
+    nmap <buffer> K <plug>(lsp-hover)
 endfunction
 
 augroup lsp_install
 	au!
-	" call s:on_lsp_buffer_enabled only for languages 
-	" that has the server registered.
 	autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
 augroup END
 
-" map to <Leader>cf in C++ code
-autocmd FileType c,cc,cpp,objc,objcpp
-	\ nnoremap <buffer><Leader>cf :<C-u>ClangFormat<CR>
-autocmd FileType c,cc,cpp,objc,objcpp
-	\ vnoremap <buffer><Leader>cf :ClangFormat<CR>
+" NERDTree configuration
+nnoremap <leader>n :NERDTreeFocus<CR>
+nnoremap <C-n> :NERDTree<CR>
+nnoremap <C-t> :NERDTreeToggle<CR>
+nnoremap <C-f> :NERDTreeFind<CR>
+
+" FZF configuration
+nnoremap <C-p> :Files<CR>
+nnoremap <leader>b :Buffers<CR>
+nnoremap <leader>g :Rg<CR>
+
+" Kernel style indentation
+set tabstop=8
+set softtabstop=8
+set shiftwidth=8
+set noexpandtab
 
 " Personal configs
 " Set quick command mode from normal mode.
 map ; :
 
-	" Set quick visual folder browsing.
-	map T ;edit ./<enter>
-
-" Set tab settings appropriate for source code editing.
-set tabstop=8
-set shiftwidth=8
-"set expandtab
-
 " Enable incremental search.
 set incsearch
-
-" Enable fast window switching.
-map t ;wincmd
-
-" Buffer manipulation commands
-map H ;tabp<enter>
-map L ;tabn<enter>
-map F ;tab
 
 " Turn off annoying highlighting.
 set nohlsearch
@@ -151,24 +128,6 @@ inoremap <Up> <C-o>gk
 
 " Use <F3> to switch between paste mode
 set pastetoggle=<F3>
-
-" This is necessary for VimTeX to load properly. The 'indent' is optional.
-filetype plugin indent on
-
-" This enables Vim's syntax-related features.
-syntax enable
-
-" vimtex stuff for mac
-if has('unix')
-	if has('mac')
-		" Choose which program to use to view PDF file
-		let g:vimtex_view_method = 'skim' 
-		" allow forward search after every successful compilation
-		let g:vimtex_view_skim_sync = 1 
-		" allow change focus to skim after command `:VimtexView`
-		let g:vimtex_view_skim_activate = 1 
-	endif
-endif
 
 " set colorcolumn for line width guide
 set colorcolumn=81
