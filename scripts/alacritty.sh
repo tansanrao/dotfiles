@@ -31,5 +31,4 @@ fi
 echo "Symlinking alacritty.toml..."
 ln -sf "$DOTFILES_DIR/alacritty.toml" "$ALACRITTY_CONFIG_DIR/alacritty.toml"
 
-echo "Alacritty setup complete! Enjoy your new terminal themes."
-
+echo "Alacritty setup complete!
