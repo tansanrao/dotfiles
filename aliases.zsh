@@ -34,3 +34,27 @@ function seecert () {
 	(openssl s_client -showcerts -servername $1 -connect $1:443 <<< \
 		"Q" | openssl x509 -text | grep -iA2 "Validity")
 }
+
+# Verbosity and settings that you pretty much just always are going to want.
+alias \
+	cp="cp -iv" \
+	mv="mv -iv" \
+	rm="rm -vI" \
+	bc="bc -ql" \
+	rsync="rsync -vrPlu" \
+	mkd="mkdir -pv"
+
+# Colorize commands when possible.
+alias \
+	ls="ls -h --color=auto" \
+	grep="grep --color=auto" \
+	diff="diff --color=auto" \
+	ip="ip -color=auto"
+
+
+# These common commands are just too long! Abbreviate them.
+alias \
+	ka="killall" \
+	g="git" \
+	e="$EDITOR" \
+	v="$EDITOR"
