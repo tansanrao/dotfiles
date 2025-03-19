@@ -27,5 +27,7 @@
     docker
     docker-compose
     docker-buildx
+    # LSP depedencies
+    clang-tools
   ];
 }

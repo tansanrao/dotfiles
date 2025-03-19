@@ -9,7 +9,7 @@
     escapeTime = 0;
     historyLimit = 10000;
     keyMode = "vi";
-    terminal = "xterm-256color";
+    terminal = "screen-256color";
     shell = "${pkgs.zsh}/bin/zsh";
 
     # Add plugins from your old config
@@ -41,7 +41,6 @@
       set-option -g renumber-windows on
       
       # True color settings
-      set -g default-terminal "$TERM"
       set -ag terminal-overrides ",$TERM:Tc"
 
       # Reload config
