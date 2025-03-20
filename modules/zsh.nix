@@ -28,7 +28,7 @@
         file = "pure.zsh";
       }
     ];
-
+    
     initExtra = ''
       # Pure prompt setup
       fpath+=("${pkgs.pure-prompt}/share/zsh/site-functions")
@@ -41,6 +41,7 @@
       alias ll="ls -la"
       alias vim="nvim"
 
+
       # History settings
       HISTSIZE=10000
       SAVEHIST=10000
@@ -50,6 +51,42 @@
 
       bindkey -v
       bindkey '^R' history-incremental-search-backward
+
+      # Helper functions
+      # For when tmux attach causes problems with old agent in envvars
+      function fixssh() {
+        eval $(tmux show-env -s |grep '^SSH_')
+      }
+
+      # remove from known_hosts helper
+      function rmkeys() {
+        ssh-keygen -f "$HOME/.ssh/known_hosts" -R $1
+      }
+
+      # SSH through multiple jump hosts
+      function jump() {
+        if (( $# < 2 )); then
+          echo "Usage: jump host1 [host2 ... hostN]"
+          return 1
+        fi
+
+        local hosts=("$@")
+        local last_host=$hosts[$#hosts]
+        local jump_hosts=()
+
+        for i in {1..$((#hosts-1))}; do
+          jump_hosts+=$hosts[$i]
+        done
+
+        local jump_string=""
+        for host in $jump_hosts; do
+          jump_string+="$host,"
+        done
+
+        jump_string=''${jump_string%,}  # Remove trailing comma
+
+        ssh -A -J $jump_string $last_host
+      }
     '';
   };
 
@@ -60,5 +97,11 @@
     options = [
       "--cmd cd"
     ];
+  };
+
+  programs.direnv = {
+    enable = true;
+    enableZshIntegration = true;
+    nix-direnv.enable = true;
   };
 }

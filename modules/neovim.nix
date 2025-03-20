@@ -30,23 +30,27 @@
     extraConfig = ''
       " Basic settings
       set number
-      set expandtab
-      set tabstop=2
-      set shiftwidth=2
       set smartindent
       set hidden
       set incsearch
+      set nohlsearch
+      set showmatch
       set ignorecase
       set smartcase
 
       " Appearance
       colorscheme catppuccin-mocha
       let g:airline_theme = 'catppuccin'
-
       set background=dark
+
+      " Airline config
+      let g:airline#extensions#tabline#enabled = 1
+      let g:airline#extensions#whitespace#mixed_indent_algo = 1
 
       " Key mappings
       let mapleader = " "
+      nnoremap <F2> :set number!<CR>
+      set pastetoggle=<F3>
 
       " Split navigation
       nnoremap <C-h> <C-w>h
@@ -58,6 +62,17 @@
       nnoremap <leader>ff <cmd>Files<CR>
       nnoremap <leader>fg <cmd>Rg<CR>
       nnoremap <leader>fb <cmd>Buffers<CR>
+      
+      " Indentation
+      set tabstop=2
+      set shiftwidth=2
+      set expandtab
+
+      " Kernel style indentation
+      augroup c_indent
+        au!
+        autocmd FileType c setlocal tabstop=8 softtabstop=8 shiftwidth=8 noexpandtab
+      augroup END
 
       " LSP Configuration
       lua << EOF
@@ -94,7 +109,7 @@
       vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, {})
       vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, {})
       vim.keymap.set('n', '<leader>f', vim.lsp.buf.format, {})
-      EOF
+     EOF
     '';
   };
 }
