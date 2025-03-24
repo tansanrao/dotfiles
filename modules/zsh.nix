@@ -6,7 +6,7 @@
     enable = true;
     enableZshIntegration = true;
     defaultCommand = "fd --type f --hidden --exclude .git";
-    defaultOptions = ["--height 40%" "--layout=reverse" "--border"];
+    defaultOptions = ["--height 30%" "--layout=reverse" "--border"];
   };
 
   # Configure zsh with pure prompt

@@ -109,6 +109,8 @@
       vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, {})
       vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, {})
       vim.keymap.set('n', '<leader>f', vim.lsp.buf.format, {})
+      vim.keymap.set('n', '[g', vim.diagnostic.goto_prev, { desc = "Go to previous diagnostic" })
+      vim.keymap.set('n', ']g', vim.diagnostic.goto_next, { desc = "Go to next diagnostic" })
      EOF
     '';
   };
