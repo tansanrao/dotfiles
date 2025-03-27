@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, username ? "tansanrao", platform ? "linux", ... }:
 
 {
   imports = [
@@ -8,10 +8,12 @@
     ./modules/git.nix
   ];
 
-  home.username = "tansanrao";
-  home.homeDirectory = "/home/tansanrao";
+  home.username = username;
+  home.homeDirectory = if platform == "darwin" 
+                       then "/Users/${username}"
+                       else "/home/${username}";
 
-  home.stateVersion = "24.11"; 
+  home.stateVersion = "24.11";
 
   # Let Home Manager install and manage itself.
   programs.home-manager.enable = true;
@@ -23,11 +25,13 @@
     fzf
     bat
     htop
-    # Docker
-    docker
-    docker-compose
-    docker-buildx
-    # LSP depedencies
+    # Docker (handled differently on macOS, consider using Docker Desktop)
+    ] ++ (if platform != "darwin" then [
+      docker
+      docker-compose
+      docker-buildx
+    ] else []) ++ [
+    # LSP dependencies
     clang-tools
   ];
 }

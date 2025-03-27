@@ -4,26 +4,49 @@
   inputs = {
     # Specify the source of Home Manager and Nixpkgs.
     nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
+    nix-darwin = {
+        url = "github:LnL7/nix-darwin/nix-darwin-24.11";
+        inputs.nixpkgs.follows = "nixpkgs";
+    };
     home-manager = {
       url = "github:nix-community/home-manager/release-24.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { nixpkgs, home-manager, ... }:
+  outputs = { nixpkgs, home-manager, nix-darwin, ... }:
     let
-      system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+      # Common configuration for all systems
+      username = "tansanrao";
     in {
-      homeConfigurations."tansanrao" = home-manager.lib.homeManagerConfiguration {
-        inherit pkgs;
-
-        # Specify your home configuration modules here, for example,
-        # the path to your home.nix.
+      # Linux configuration 
+      homeConfigurations."${username}" = home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
         modules = [ ./home.nix ];
-
-        # Optionally use extraSpecialArgs
-        # to pass through arguments to home.nix
+        extraSpecialArgs = {
+          inherit username;
+          platform = "linux";
+        };
       };
-    };
+
+      # macOS configuration with nix-darwin
+      darwinConfigurations."${username}-mac" = nix-darwin.lib.darwinSystem {
+        system = "aarch64-darwin"; # Use "x86_64-darwin" for Intel Macs
+	specialArgs = { inherit username; };
+        modules = [
+          ./darwin-configuration.nix
+          home-manager.darwinModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.backupFileExtension = "backup";
+            home-manager.users.${username} = import ./home.nix;
+            home-manager.extraSpecialArgs = {
+              inherit username;
+              platform = "darwin";
+            };
+          }
+        ];
+      };
+  };
 }
