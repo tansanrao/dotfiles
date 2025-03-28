@@ -11,6 +11,7 @@
     keyMode = "vi";
     terminal = "screen-256color";
     shell = "${pkgs.zsh}/bin/zsh";
+    sensibleOnTop = false;
 
     # Add plugins from your old config
     plugins = [
@@ -18,10 +19,6 @@
       #   plugin = pkgs.tmuxPlugins.tpm;
       #   extraConfig = "";
       # }
-      {
-        plugin = pkgs.tmuxPlugins.sensible;
-        extraConfig = "";
-      }
       {
         plugin = pkgs.tmuxPlugins.catppuccin;
         extraConfig = ''
@@ -39,12 +36,15 @@
       set -g pane-base-index 1
       set-window-option -g pane-base-index 1
       set-option -g renumber-windows on
+
+      # Focus events enabled for terminals that support them
+      set -g focus-events on
       
       # True color settings
       set -ag terminal-overrides ",$TERM:Tc"
-
+      
       # Reload config
-      bind r source-file ~/.config/tmux/tmux.conf \; display "Reloaded!"
+      bind R source-file ~/.config/tmux/tmux.conf \; display "Reloaded!"
     '';
   };
 }
