@@ -1,6 +1,6 @@
 { pkgs, ... }:
 {
-
+  networking.hostName = "millennium-falcon";
   # Make sure the nix daemon always runs
   services.nix-daemon.enable = true;
   
