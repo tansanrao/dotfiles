@@ -50,13 +50,10 @@
     "zotero"
     "vlc"
     "obsidian"
-    "orbstack"
     "rectangle"
     "skim"
-    "whatsapp"
     "slack"
     "windows-app"
-    "lens"
     "microsoft-office"
     "font-ia-writer-duo"
     "font-ia-writer-mono"
@@ -66,6 +63,15 @@
     "logi-options+"
   ];
   homebrew.brews = [];
+
+  homebrew.masapps = {
+    "1Password for Safari" = 1569813296;
+    "Xcode" = 497799835;
+    "Infuse" = 1136220934;
+    "Fantastical" = 975937182;
+    "Flow" = 1423210932;
+    "Amphetamine" = 937984704;
+  };
 
   # Create /etc/zshrc that loads the nix-darwin environment
   programs.zsh.enable = true;
