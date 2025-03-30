@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, lib, ... }:
 {
   networking.hostName = "millennium-falcon";
   # Make sure the nix daemon always runs
@@ -11,6 +11,9 @@
 
     # System configuration
   system.defaults = {
+    LaunchServices = {
+      LSQuarantine = false;
+    };
     NSGlobalDomain = {
       AppleShowAllExtensions = true;
       InitialKeyRepeat = 15;
@@ -25,7 +28,11 @@
     };
     dock = {
       autohide = true;
-      mru-spaces = false;
+      show-recents = false;
+      launchanim = true;
+      mouse-over-hilite-stack = true;
+      orientation = "bottom";
+      tilesize = 48;
     };
     finder = {
       _FXShowPosixPathInTitle = true;  # show full path in finder title
@@ -35,10 +42,10 @@
       ShowPathbar = true;  # show path bar
       ShowStatusBar = true;  # show status bar
     };
-  };
+  }; 
 
-  # Add ability to use Touch ID for sudo authentication
-  security.pam.enableSudoTouchIdAuth = true;
+  # Block ability to use Touch ID for sudo authentication
+  security.pam.enableSudoTouchIdAuth = false;
 
   # Install and manage Homebrew packages if needed
   homebrew.enable = true;
@@ -49,8 +56,8 @@
     cleanup = "zap";
   };
   homebrew.casks = [
-    "alacritty"
     "firefox"
+    "alacritty"
     "alfred"
     "discord"
     "tailscale"
@@ -61,7 +68,6 @@
     "orbstack"
     "rectangle"
     "skim"
-    "whatsapp"
     "slack"
     "windows-app"
     "microsoft-office"
@@ -69,10 +75,18 @@
     "font-ia-writer-mono"
     "font-ia-writer-quattro"
     "font-im-writing-nerd-font"
-    "logitune"
     "logi-options+"
+    "1password"
   ];
   homebrew.brews = [];
+
+  homebrew.masApps = {
+    "Xcode" = 497799835;
+    "Infuse" = 1136220934;
+    "Fantastical" = 975937182;
+    "Flow" = 1423210932;
+    "Amphetamine" = 937984704;
+  };
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
@@ -97,6 +111,7 @@
       ../../modules/neovim.nix
       ../../modules/tmux.nix
       ../../modules/git.nix
+      ../../modules/alacritty.nix
     ];
     
     home.stateVersion = "24.11"; 
@@ -108,11 +123,38 @@
       fzf
       bat
       htop
+
+      # Dock automation
+      dockutil
+
       # LSP dependencies
       clang-tools
     ];
 
   };
-  
+
+  imports = [
+    ../../darwin/dock.nix
+  ];
+
+  # Fully declarative dock using the latest from Nix Store
+  local = {
+    dock.enable = true;
+    dock.entries = [
+      { path = "/Applications/Slack.app/"; }
+      { path = "/System/Applications/Messages.app/"; }
+      { path = "/System/Applications/Facetime.app/"; }
+      { path = "/Applications/Alacritty.app/"; }
+      { path = "/System/Applications/Music.app/"; }
+      { path = "/System/Applications/Home.app/"; }
+      { path = "/System/Applications/Mail.app/"; }
+      { path = "/Applications/Firefox.app/"; }
+      {
+        path = "${config.users.users.tansanrao.home}/Downloads";
+        section = "others";
+        options = "--sort name --view grid --display stack";
+      }
+    ];
+  };
 
 }
