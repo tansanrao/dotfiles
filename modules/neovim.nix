@@ -25,6 +25,13 @@
       nvim-lspconfig
       nvim-cmp
       cmp-nvim-lsp
+      cmp-path
+      luasnip
+      cmp_luasnip
+
+      # TeX Support
+      vimtex
+      cmp-vimtex
     ];
 
     extraConfig = ''
@@ -82,6 +89,23 @@
       			\   exe "normal g`\"" |
       			\ endif
 
+      " Vimtex configuration
+      let g:vimtex_view_method = 'skim'
+      let g:vimtex_view_skim_sync = 1
+      let g:vimtex_view_skim_activate = 1
+      let g:vimtex_quickfix_mode = 0
+      let g:tex_flavor = 'latex'
+      let g:vimtex_compiler_latexmk = {
+          \ 'options' : [
+          \   '-pdf',
+          \   '-shell-escape',
+          \   '-verbose',
+          \   '-file-line-error',
+          \   '-synctex=1',
+          \   '-interaction=nonstopmode',
+          \ ],
+          \}
+
       " LSP Configuration
       lua << EOF
       -- LSP setup
@@ -92,21 +116,62 @@
         cmd = { "clangd", "--background-index"},
         filetypes = { "c", "cpp", "objc", "objcpp" },
       }
+      
+      -- texlab setup for LaTeX
+      lspconfig.texlab.setup {
+        capabilities = capabilities,
+        settings = {
+          texlab = {
+            build = {
+              onSave = true,
+            },
+            latexFormatter = "latexindent",
+            forwardSearch = {
+              executable = "displayline",
+              args = {"%l", "%p", "%f"},
+            }
+          }
+        }
+      }
+      
+      -- LuaSnip setup
+      local luasnip = require('luasnip')
 
       -- nvim-cmp setup
       local cmp = require('cmp')
       cmp.setup({
-        completion = {
-          autocomplete = false,  -- Disable automatic completion
+        snippet = {
+          expand = function(args)
+            luasnip.lsp_expand(args.body)
+          end,
         },
-        mapping = {
-          ['<Tab>'] = cmp.mapping.select_next_item(),
-          ['<S-Tab>'] = cmp.mapping.select_prev_item(),
+        mapping = cmp.mapping.preset.insert({
+          ['<C-d>'] = cmp.mapping.scroll_docs(-4),
+          ['<C-f>'] = cmp.mapping.scroll_docs(4),
+          ['<C-x><C-o>'] = cmp.mapping.complete(),
           ['<CR>'] = cmp.mapping.confirm({ select = true }),
-        },
-        sources = {
+          ['<Tab>'] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+              cmp.select_next_item()
+            else
+              fallback()
+            end
+          end, { 'i', 's' }),
+          ['<S-Tab>'] = cmp.mapping(function(fallback)
+            if cmp.visible() then
+              cmp.select_prev_item()
+            else
+              fallback()
+            end
+          end, { 'i', 's' }),
+        }),
+        sources = cmp.config.sources({
           { name = 'nvim_lsp' },
-        },
+          { name = 'luasnip' },
+          { name = 'vimtex' },
+        }, {
+          { name = 'path' },
+        }),
       })
 
       -- LSP keybindings

@@ -6,10 +6,6 @@
     enable = true;
     package = pkgs.emptyDirectory;
     settings = {
-      cursor = {
-        style = "Block";
-      };
-
       window = {
         opacity = 1.0;
       };
@@ -19,7 +15,7 @@
           family = "iMWritingMono Nerd Font";
           style = "Regular";
         };
-        size = 14;
+        size = 16;
       };
       colors = {
         primary = {

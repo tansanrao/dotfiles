@@ -78,7 +78,9 @@
     "logi-options+"
     "1password"
   ];
-  homebrew.brews = [];
+  homebrew.brews = [
+    "texlive"
+  ];
 
   homebrew.masApps = {
     "Xcode" = 497799835;
@@ -129,6 +131,8 @@
 
       # LSP dependencies
       clang-tools
+      texlab
+      biber
     ];
 
   };
@@ -144,6 +148,7 @@
       { path = "/Applications/Slack.app/"; }
       { path = "/System/Applications/Messages.app/"; }
       { path = "/System/Applications/Facetime.app/"; }
+      { path = "/Applications/Fantastical.app/"; }
       { path = "/Applications/Alacritty.app/"; }
       { path = "/System/Applications/Music.app/"; }
       { path = "/System/Applications/Home.app/"; }
