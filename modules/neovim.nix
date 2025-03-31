@@ -20,6 +20,7 @@
 
       # Navigation and search
       fzf-vim
+      nerdtree
 
       # LSP Support
       nvim-lspconfig
@@ -69,6 +70,16 @@
       nnoremap <leader>ff <cmd>Files<CR>
       nnoremap <leader>fg <cmd>Rg<CR>
       nnoremap <leader>fb <cmd>Buffers<CR>
+
+      " NERDTree configuration
+      let g:NERDTreeShowHidden = 1
+      let g:NERDTreeMinimalUI = 1
+      let g:NERDTreeDirArrows = 1
+      let g:NERDTreeAutoDeleteBuffer = 1
+      
+      " NERDTree key mappings
+      nnoremap <leader>n :NERDTreeToggle<CR>
+      nnoremap <leader>nf :NERDTreeFind<CR>
       
       " Indentation
       set tabstop=2
