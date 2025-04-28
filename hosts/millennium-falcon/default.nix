@@ -78,9 +78,7 @@
     "logi-options+"
     "1password"
   ];
-  homebrew.brews = [
-    "texlive"
-  ];
+  homebrew.brews = [];
 
   homebrew.masApps = {
     "Xcode" = 497799835;
@@ -132,7 +130,9 @@
       # LSP dependencies
       clang-tools
       texlab
-      biber
+
+      # LaTeX
+      texliveFull
     ];
 
   };
@@ -151,11 +151,11 @@
       { path = "/Applications/Fantastical.app/"; }
       { path = "/Applications/Alacritty.app/"; }
       { path = "/System/Applications/Music.app/"; }
-      { path = "/System/Applications/Home.app/"; }
+      { path = "/Applications/Notes.app/"; }
       { path = "/System/Applications/Mail.app/"; }
       { path = "/Applications/Firefox.app/"; }
       {
-        path = "${config.users.users.tansanrao.home}/Downloads";
+        path = "${config.users.users.tansanrao.home}/Downloads/";
         section = "others";
         options = "--sort name --view grid --display stack";
       }
