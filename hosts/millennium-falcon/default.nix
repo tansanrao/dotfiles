@@ -77,6 +77,7 @@
     "font-im-writing-nerd-font"
     "logi-options+"
     "1password"
+    "lens"
   ];
   homebrew.brews = [];
 
