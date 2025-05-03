@@ -24,9 +24,14 @@
       ];
     };
 
-    homeConfigurations."tansanrao@x-wing" = home-manager.lib.homeManagerConfiguration {
+    homeConfigurations."tansanrao@death-star" = home-manager.lib.homeManagerConfiguration {
       pkgs = nixpkgs.legacyPackages.x86_64-linux;
-      modules = [ ./hosts/x-wing/default.nix ];
+      modules = [ ./hosts/death-star/default.nix ];
+    };
+
+    homeConfigurations."tansanrao@wukong7" = home-manager.lib.homeManagerConfiguration {
+      pkgs = nixpkgs.legacyPackages.x86_64-linux;
+      modules = [ ./hosts/lab-servers/default.nix ];
     };
 
   };
