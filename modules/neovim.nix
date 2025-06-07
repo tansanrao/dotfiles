@@ -58,7 +58,6 @@
       " Key mappings
       let mapleader = " "
       nnoremap <F2> :set number!<CR>
-      set pastetoggle=<F3>
 
       " Split navigation
       nnoremap <C-h> <C-w>h

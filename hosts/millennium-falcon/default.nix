@@ -2,7 +2,7 @@
 {
   networking.hostName = "millennium-falcon";
   # Make sure the nix daemon always runs
-  services.nix-daemon.enable = true;
+  # services.nix-daemon.enable = true;
   
   # if you use zsh (the default on new macOS installations),
   # you'll need to enable this so nix-darwin creates a zshrc sourcing needed environment changes
@@ -45,7 +45,7 @@
   }; 
 
   # Block ability to use Touch ID for sudo authentication
-  security.pam.enableSudoTouchIdAuth = false;
+  security.pam.services.sudo_local.touchIdAuth = false;
 
   # Install and manage Homebrew packages if needed
   homebrew.enable = true;
@@ -78,6 +78,7 @@
     "logi-options+"
     "1password"
     "lens"
+    "zed"
   ];
   homebrew.brews = [];
 
@@ -101,6 +102,9 @@
     home = "/Users/tansanrao";
     shell = "${pkgs.zsh}/bin/zsh";
   };
+
+  # Set primary user for darwin 25.05 migration
+  system.primaryUser = "tansanrao";
 
   # Home-Manager setup
   home-manager.useGlobalPkgs = true;
