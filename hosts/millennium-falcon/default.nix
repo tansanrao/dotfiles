@@ -3,7 +3,10 @@
   networking.hostName = "millennium-falcon";
   # Make sure the nix daemon always runs
   # services.nix-daemon.enable = true;
-  
+
+  # Configure nix
+  nix.settings.extra-experimental-features = [ "nix-command" "flakes" ];  
+
   # if you use zsh (the default on new macOS installations),
   # you'll need to enable this so nix-darwin creates a zshrc sourcing needed environment changes
   programs.zsh.enable = true;
@@ -58,14 +61,12 @@
   homebrew.casks = [
     "firefox"
     "alacritty"
-    "alfred"
     "discord"
-    "tailscale"
+    "tailscale-app"
     "zoom"
     "zotero"
     "vlc"
     "obsidian"
-    "orbstack"
     "rectangle"
     "skim"
     "slack"
@@ -79,6 +80,7 @@
     "1password"
     "lens"
     "zed"
+    "container"
   ];
   homebrew.brews = [];
 

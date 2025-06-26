@@ -67,26 +67,17 @@
       function jump() {
         # Check for minimum number of arguments (1 jump host + 1 final host)
         if (( ''$# < 2 )); then
-          echo "Usage: jump host1 [host2 ... hostN]" >&2 # Print error to stderr
+          echo "Usage: jump host1 [host2 ... hostN]" >&2 
             return 1
             fi
 
-            # Capture all arguments into an array
-            local hosts=("''$@")
+            local -a hosts=("''$@")
 
-            # Get the last host (destination) using Zsh negative indexing
             local last_host="''${hosts[-1]}"
 
-            # Get all hosts except the last one (jump hosts) using Zsh slicing
-            local jump_hosts_array=("''${hosts[1,-2]}")
+            local -a proxies=("''${hosts[@]:0:''$#hosts-1}")
 
-            # Join the jump hosts array with commas using Zsh parameter expansion flags
-            local jump_string="''${(j:,:)jump_hosts_array}"
-
-            # Check if jump_string is empty (only happens if $# == 2)
-            if [[ -z "''${jump_string}" ]]; then
-              jump_string="''${hosts[1]}"
-            fi
+            local jump_string="''${(j:,:)proxies}"
 
             ssh -A -J "''${jump_string}" "''${last_host}"
       }
