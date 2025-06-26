@@ -80,6 +80,7 @@
     "1password"
     "lens"
     "zed"
+    "orbstack"
     "container"
   ];
   homebrew.brews = [];
@@ -122,11 +123,6 @@
     
     home.stateVersion = "25.05"; 
 
-    # Set shell alias for docker to use apple container cli
-    home.shellAliases = {
-      docker = "container";
-    };
-    
     home.packages = with pkgs; [
       # Basic Utilities
       ripgrep
