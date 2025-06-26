@@ -88,7 +88,6 @@
     "Xcode" = 497799835;
     "Infuse" = 1136220934;
     "Fantastical" = 975937182;
-    "Flow" = 1423210932;
     "Amphetamine" = 937984704;
   };
 
@@ -96,7 +95,7 @@
   nixpkgs.config.allowUnfree = true;
 
   # Used for backwards compatibility, please read the changelog before changing.
-  system.stateVersion = 5;
+  system.stateVersion = 6;
 
   # Add your user to nixbld group
   users.users.tansanrao = {
@@ -121,7 +120,12 @@
       ../../modules/alacritty.nix
     ];
     
-    home.stateVersion = "24.11"; 
+    home.stateVersion = "25.05"; 
+
+    # Set shell alias for docker to use apple container cli
+    home.shellAliases = {
+      docker = "container";
+    };
     
     home.packages = with pkgs; [
       # Basic Utilities

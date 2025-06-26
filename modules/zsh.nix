@@ -29,7 +29,7 @@
       }
     ];
     
-    initExtra = ''
+    initContent = ''
       # Pure prompt setup
       fpath+=("${pkgs.pure-prompt}/share/zsh/site-functions")
       autoload -U promptinit
