@@ -119,15 +119,15 @@ get_dev_tools_packages() {
 }
 
 get_essential_casks() {
-    echo "alacritty"
+    echo "alacritty discord logi-options+"
 }
 
 get_development_casks() {
-    echo "font-im-writing-nerd-font"
+    echo "zed font-im-writing-nerd-font font-ia-writer-mono font-ia-writer-duo font-ia-writer-quattro orbstack"
 }
 
 get_productivity_casks() {
-    echo "slack obsidian rectangle"
+    echo "slack obsidian rectangle zotero"
 }
 
 get_essential_mas_apps() {

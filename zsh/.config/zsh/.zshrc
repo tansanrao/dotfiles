@@ -14,7 +14,6 @@ compinit
 
 # Enable vi mode
 bindkey -v
-bindkey '^R' history-incremental-search-backward
 
 # Aliases
 alias ls="ls --color=auto"
@@ -51,9 +50,13 @@ function jump() {
 # Load tool integrations if available
 # fzf
 if command -v fzf >/dev/null 2>&1; then
-  # Enable fzf key bindings and fuzzy completion
-  if [[ -f ~/.fzf.zsh ]]; then
-    source ~/.fzf.zsh
+  # Enable fzf key bindings and fuzzy completion (Homebrew installation)
+  if [[ -f /opt/homebrew/opt/fzf/shell/key-bindings.zsh ]]; then
+    source /opt/homebrew/opt/fzf/shell/key-bindings.zsh
+  fi
+  
+  if [[ -f /opt/homebrew/opt/fzf/shell/completion.zsh ]]; then
+    source /opt/homebrew/opt/fzf/shell/completion.zsh
   fi
   
   # fzf configuration

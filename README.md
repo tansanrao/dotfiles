@@ -5,7 +5,7 @@ Simple dotfiles repository for installing tools, configuring plugins, and linkin
 ## Quick Start
 
 ```bash
-git clone https://github.com/yourusername/dotfiles ~/.dotfiles
+git clone https://github.com/tansanrao/dotfiles ~/.dotfiles
 cd ~/.dotfiles
 ./install.sh
 ```
