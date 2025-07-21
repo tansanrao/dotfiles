@@ -6,12 +6,6 @@
 node = "lts"
 python = "3.12"
 
-# Development tools that were previously managed by Nix
-# These will be installed via mise when available
-# or fallback to system package managers
-"clang-tools" = "latest"  # clangd for C/C++ LSP
-"texlab" = "latest"       # LaTeX LSP
-
 [settings]
 # Enable legacy version files (.nvmrc, .python-version, etc)
 legacy_version_file = true
