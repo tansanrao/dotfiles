@@ -127,7 +127,7 @@ get_development_casks() {
 }
 
 get_productivity_casks() {
-    echo "slack obsidian rectangle zotero"
+    echo "slack obsidian rectangle zotero skim zoom"
 }
 
 get_essential_mas_apps() {

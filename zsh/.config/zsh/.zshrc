@@ -92,3 +92,4 @@ fi
 if [[ -f ~/.config/zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
   source ~/.config/zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 fi 
+. "$HOME/.local/bin/env"

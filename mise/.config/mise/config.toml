@@ -15,6 +15,7 @@ auto_install = true
 
 # Enable shell completions
 activate_aggressive = true
+idiomatic_version_file_enable_tools = ["python"]
 
 [alias]
 # Node.js aliases
