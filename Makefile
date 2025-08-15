@@ -47,8 +47,8 @@ endif
 macos: packages-macos dotfiles plugins ## Full macOS setup
 	$(call success,"macOS setup complete!")
 
-linux: packages-linux dotfiles plugins ## Full Linux setup
-	$(call success,"Linux setup complete!")
+linux: packages-linux dotfiles plugins ## Full Ubuntu/Debian setup
+	$(call success,"Ubuntu/Debian setup complete!")
 
 packages: ## Install packages for current platform
 ifeq ($(UNAME_S),Darwin)
@@ -68,10 +68,10 @@ ifneq ($(wildcard packages/Brewfile.$(HOSTNAME)),)
 endif
 	$(call success,"macOS packages installed")
 
-packages-linux: ## Install Linux packages via apt
-	$(call info,"Installing Linux packages...")
+packages-linux: ## Install Ubuntu/Debian packages via apt and snap
+	$(call info,"Installing Ubuntu/Debian packages...")
 	@./scripts/bootstrap-linux.sh
-	$(call success,"Linux packages installed")
+	$(call success,"Ubuntu/Debian packages installed")
 
 dotfiles: ## Install dotfiles via GNU stow
 	$(call info,"Installing dotfiles...")
@@ -132,8 +132,10 @@ status: ## Show installation status
 	@echo ""
 	@echo "Tools:"
 	@command -v brew >/dev/null 2>&1 && echo "  ✓ Homebrew" || echo "  ✗ Homebrew"
+	@command -v snap >/dev/null 2>&1 && echo "  ✓ Snap" || echo "  ✗ Snap"
 	@command -v stow >/dev/null 2>&1 && echo "  ✓ GNU Stow" || echo "  ✗ GNU Stow"
 	@command -v mise >/dev/null 2>&1 && echo "  ✓ mise" || echo "  ✗ mise"
+	@command -v nvim >/dev/null 2>&1 && echo "  ✓ Neovim ($(shell nvim --version | head -1 | cut -d' ' -f2))" || echo "  ✗ Neovim"
 	@echo ""
 	@echo "Dotfile packages:"
 	@cd stow && for package in */; do \

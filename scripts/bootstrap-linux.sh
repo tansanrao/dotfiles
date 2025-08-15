@@ -1,63 +1,75 @@
 #!/usr/bin/env bash
-# Bootstrap script for Linux - Install essential tools and packages
+# Bootstrap script for Ubuntu/Debian - Install essential tools and packages
 
 set -euo pipefail
 
-echo "INFO: Setting up Linux prerequisites..."
+echo "INFO: Setting up Ubuntu/Debian prerequisites..."
 
-# Detect package manager
-if command -v apt &> /dev/null; then
-    PACKAGE_MANAGER="apt"
-elif command -v dnf &> /dev/null; then
-    PACKAGE_MANAGER="dnf"
-elif command -v pacman &> /dev/null; then
-    PACKAGE_MANAGER="pacman"
-else
-    echo "ERROR: No supported package manager found (apt, dnf, pacman)"
+# Verify we're on a Debian-based system
+if ! command -v apt &> /dev/null; then
+    echo "ERROR: This script is for Ubuntu/Debian systems only (apt not found)"
     exit 1
 fi
 
-echo "INFO: Detected package manager: $PACKAGE_MANAGER"
-
 # Update package lists
-case "$PACKAGE_MANAGER" in
-    apt)
-        echo "INFO: Updating package lists..."
-        sudo apt update -qq
+echo "INFO: Updating package lists..."
+sudo apt update -qq
+
+# Install snapd if not present
+if ! command -v snap &> /dev/null; then
+    echo "INFO: Installing snapd..."
+    sudo apt install -y snapd
+    sudo systemctl enable --now snapd.socket
+    sudo ln -sf /var/lib/snapd/snap /snap 2>/dev/null || true
+    export PATH="/snap/bin:$PATH"
+fi
+
+# Install packages from apt-packages.txt
+echo "INFO: Installing packages from apt-packages.txt..."
+if [[ -f "packages/apt-packages.txt" ]]; then
+    xargs -a packages/apt-packages.txt sudo apt install -y
+fi
+
+# Fix Ubuntu command names (bat -> batcat, fd -> fdfind)
+if command -v batcat &> /dev/null && ! command -v bat &> /dev/null; then
+    mkdir -p ~/.local/bin
+    ln -sf /usr/bin/batcat ~/.local/bin/bat
+fi
+
+if command -v fdfind &> /dev/null && ! command -v fd &> /dev/null; then
+    mkdir -p ~/.local/bin
+    ln -sf /usr/bin/fdfind ~/.local/bin/fd
+fi
+
+# Install snap packages
+if [[ -f "packages/snap-packages.txt" ]]; then
+    echo "INFO: Installing snap packages..."
+    while IFS= read -r line; do
+        # Skip comments and empty lines
+        [[ "$line" =~ ^#.*$ ]] && continue
+        [[ -z "$line" ]] && continue
         
-        echo "INFO: Installing packages from apt-packages.txt..."
-        if [[ -f "packages/apt-packages.txt" ]]; then
-            xargs -a packages/apt-packages.txt sudo apt install -y
+        # Parse package line - split into array
+        read -ra parts <<< "$line"
+        package="${parts[0]}"
+        
+        if [[ -n "$package" ]]; then
+            # Check if already installed
+            if snap list "$package" &>/dev/null; then
+                echo "INFO: $package already installed via snap"
+            else
+                echo "INFO: Installing $package via snap..."
+                # Install with all remaining arguments as flags
+                sudo snap install "${parts[@]}"
+            fi
         fi
-        
-        # Fix Ubuntu command names (bat -> batcat, fd -> fdfind)
-        if command -v batcat &> /dev/null && ! command -v bat &> /dev/null; then
-            mkdir -p ~/.local/bin
-            ln -sf /usr/bin/batcat ~/.local/bin/bat
-        fi
-        
-        if command -v fdfind &> /dev/null && ! command -v fd &> /dev/null; then
-            mkdir -p ~/.local/bin
-            ln -sf /usr/bin/fdfind ~/.local/bin/fd
-        fi
-        ;;
-    dnf)
-        echo "INFO: Updating package cache..."
-        sudo dnf check-update -q || true
-        
-        # Convert apt package names to dnf equivalents
-        echo "INFO: Installing packages..."
-        sudo dnf install -y curl wget git gcc gcc-c++ make stow neovim tmux zsh ripgrep fd-find fzf bat htop jq tree rsync
-        ;;
-    pacman)
-        echo "INFO: Updating package database..."
-        sudo pacman -Sy --quiet
-        
-        # Convert apt package names to pacman equivalents
-        echo "INFO: Installing packages..."
-        sudo pacman -S --noconfirm --quiet curl wget git base-devel stow neovim tmux zsh ripgrep fd fzf bat htop jq tree rsync
-        ;;
-esac
+    done < packages/snap-packages.txt
+    
+    # Create alias for nvim -> neovim if needed
+    if snap list nvim &>/dev/null && ! command -v neovim &> /dev/null; then
+        sudo snap alias nvim neovim 2>/dev/null || true
+    fi
+fi
 
 # Install mise if not present
 if ! command -v mise &> /dev/null; then
@@ -72,4 +84,4 @@ if ! command -v zoxide &> /dev/null; then
     curl -sSf https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
 fi
 
-echo "SUCCESS: Linux bootstrap complete!"
+echo "SUCCESS: Ubuntu/Debian bootstrap complete!"

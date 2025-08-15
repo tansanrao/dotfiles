@@ -1,0 +1,5 @@
+# Snap packages for Linux
+# Format: package [channel] [classic|strict|devmode]
+# Example: code --classic
+# Example: spotify
+nvim --classic

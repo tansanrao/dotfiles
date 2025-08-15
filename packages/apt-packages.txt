@@ -3,7 +3,6 @@ wget
 git
 build-essential
 stow
-neovim
 tmux
 zsh
 ripgrep

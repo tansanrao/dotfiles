@@ -4,15 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a modern personal dotfiles repository that manages configuration files and development environment setup using GNU Stow, Homebrew Bundle, and Make for declarative, cross-platform package management.
+This is a modern personal dotfiles repository that manages configuration files and development environment setup using GNU Stow, Homebrew Bundle, and Make for macOS and Ubuntu/Debian systems.
 
 ## Core Architecture
 
 - **Makefile-driven**: Primary interface using make targets for all operations
-- **Declarative packages**: Brewfile for macOS, package lists for Linux  
+- **Declarative packages**: Brewfile for macOS, apt/snap lists for Ubuntu  
 - **GNU Stow**: Symlink management for dotfiles in stow/ directory
 - **Minimal scripting**: Bootstrap scripts only, no complex bash libraries
-- **Cross-platform**: macOS (Homebrew), Ubuntu/Debian (apt), RHEL/Fedora (dnf), Arch Linux (pacman)
+- **Platform support**: macOS (Homebrew) and Ubuntu/Debian (apt + snap)
 
 ## Repository Structure
 
@@ -22,7 +22,8 @@ This is a modern personal dotfiles repository that manages configuration files a
 ├── README.md             # Comprehensive documentation
 ├── packages/             # Declarative package management
 │   ├── Brewfile          # macOS packages (Homebrew Bundle)
-│   ├── apt-packages.txt  # Ubuntu/Debian packages
+│   ├── apt-packages.txt  # Ubuntu/Debian system packages
+│   ├── snap-packages.txt # Snap packages (Neovim latest)
 │   └── mise-tools.txt    # Development tools (Node, Python)
 ├── stow/                 # GNU Stow packages (dotfiles)
 │   ├── alacritty/
@@ -51,7 +52,7 @@ make plugins       # Install zsh/tmux plugins
 
 # Platform-specific
 make macos         # Full macOS setup
-make linux         # Full Linux setup
+make linux         # Full Ubuntu/Debian setup
 
 # Maintenance
 make update        # Update packages and repository
@@ -73,10 +74,13 @@ brew bundle dump --file=packages/Brewfile -f
 brew bundle cleanup --file=packages/Brewfile
 ```
 
-#### Linux (Package Lists)
+#### Ubuntu/Debian
 ```bash
-# Install packages from list
+# Install system packages from apt
 xargs -a packages/apt-packages.txt sudo apt install -y
+
+# Install snap packages (handled by bootstrap-linux.sh)
+sudo snap install nvim --classic
 ```
 
 ### Dotfiles Management (GNU Stow)
@@ -104,9 +108,10 @@ while read tool; do mise use -g "$tool"; done < packages/mise-tools.txt
 
 - `Makefile` - Primary interface, replaces complex bash scripts
 - `packages/Brewfile` - Declarative macOS package management
-- `packages/apt-packages.txt` - Simple Linux package list
+- `packages/apt-packages.txt` - Ubuntu/Debian system packages (via apt)
+- `packages/snap-packages.txt` - Snap packages for latest versions (Neovim)
 - `stow/*/` - Each subdirectory is a stow package for an application
-- `scripts/bootstrap-*.sh` - Minimal platform setup (install package managers)
+- `scripts/bootstrap-*.sh` - Platform setup (package managers, snap, neovim)
 - `scripts/install-plugins.sh` - Zsh and tmux plugin installation
 
 ## Development Workflow

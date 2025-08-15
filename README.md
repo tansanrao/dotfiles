@@ -12,9 +12,9 @@ make install
 
 ## Features
 
-- **Declarative package management** - Brewfile for macOS, package lists for Linux
+- **Declarative package management** - Brewfile for macOS, apt/snap for Ubuntu
 - **GNU Stow integration** - Clean symlink management
-- **Cross-platform support** - macOS, Ubuntu, Fedora, Arch Linux
+- **Cross-platform support** - macOS and Ubuntu/Debian
 - **Minimal complexity** - No custom bash libraries, leverage existing tools
 - **Host-specific configs** - Override defaults per machine
 - **Development tools** - mise for Node.js, Python, etc.
@@ -33,6 +33,7 @@ make install
 │   ├── Brewfile          # macOS packages (Homebrew)
 │   ├── Brewfile.work     # Host-specific additions (optional)
 │   ├── apt-packages.txt  # Ubuntu/Debian packages
+│   ├── snap-packages.txt # Snap packages (for latest Neovim)
 │   └── mise-tools.txt    # Development tools
 │
 ├── stow/                 # GNU Stow packages (dotfiles)
@@ -80,9 +81,9 @@ make status         # Show installation status
 
 ```bash
 make macos          # Full macOS setup
-make linux          # Full Linux setup
+make linux          # Full Ubuntu/Debian setup
 make packages-macos # Install Homebrew packages
-make packages-linux # Install apt packages
+make packages-linux # Install apt/snap packages
 ```
 
 ### Development Tools
@@ -118,17 +119,24 @@ brew bundle dump --file=packages/Brewfile -f  # Generate from current
 brew bundle cleanup --file=packages/Brewfile  # Remove unlisted packages
 ```
 
-### Linux (apt/dnf/pacman)
+### Ubuntu/Debian (apt)
 
-Packages listed in `packages/apt-packages.txt`:
+System packages listed in `packages/apt-packages.txt`:
 
 ```
 git
-neovim
 tmux
 zsh
 ripgrep
 ```
+
+Snap packages in `packages/snap-packages.txt`:
+
+```
+nvim --classic  # Latest Neovim version
+```
+
+**Note**: Neovim is installed via Snap to ensure the latest version on Ubuntu, matching the macOS Homebrew version.
 
 ### Development Tools (mise)
 
@@ -185,7 +193,7 @@ mkdir -p config/$(hostname)
 **macOS:**
 - Xcode Command Line Tools: `xcode-select --install`
 
-**Linux:**
+**Ubuntu/Debian:**
 - sudo access for package installation
 - git (usually pre-installed)
 
@@ -221,7 +229,7 @@ echo 'brew "new-tool"' >> packages/Brewfile
 make packages-macos
 ```
 
-**Linux:**
+**Ubuntu/Debian:**
 ```bash
 echo "new-tool" >> packages/apt-packages.txt
 make packages-linux
@@ -272,8 +280,8 @@ make backup
 ### Common Issues
 
 1. **Stow conflicts** - Remove existing files/symlinks before stowing
-2. **Permission errors** - Ensure proper sudo access on Linux
-3. **Missing tools** - Run platform bootstrap: `./scripts/bootstrap-mac.sh`
+2. **Permission errors** - Ensure proper sudo access on Ubuntu
+3. **Missing tools** - Run platform bootstrap: `./scripts/bootstrap-mac.sh` or `./scripts/bootstrap-linux.sh`
 
 ### Debug Commands
 
