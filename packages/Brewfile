@@ -1,0 +1,48 @@
+# Brewfile - Declarative package management for macOS
+# Run: brew bundle --file=packages/Brewfile
+
+# Essential command-line tools
+brew "curl"
+brew "wget"
+brew "git"
+brew "stow"
+
+# Development tools
+brew "neovim"
+brew "tmux"
+brew "zsh"
+brew "ripgrep"
+brew "fd"
+brew "fzf"
+brew "bat"
+brew "htop"
+brew "mise"
+brew "zoxide"
+brew "texlive"
+brew "jq"
+brew "tree"
+
+# Mac App Store CLI
+brew "mas"
+
+# Casks - GUI Applications
+cask "alacritty"
+cask "discord"
+cask "logi-options+"
+cask "zed"
+cask "font-im-writing-nerd-font"
+cask "font-ia-writer-mono"
+cask "font-ia-writer-duo"
+cask "font-ia-writer-quattro"
+cask "orbstack"
+cask "slack"
+cask "obsidian"
+cask "rectangle"
+cask "zotero"
+cask "skim"
+cask "zoom"
+
+# Mac App Store apps
+mas "Amphetamine", id: 937984704
+mas "Xcode", id: 497799835
+mas "Fantastical", id: 975937182

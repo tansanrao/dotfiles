@@ -1,108 +1,300 @@
-# Dotfiles
+# Modern Dotfiles
 
-Simple dotfiles repository for installing tools, configuring plugins, and linking dotfiles.
+A clean, declarative dotfiles repository using GNU Stow, Homebrew Bundle, and Make for cross-platform development environment management.
 
 ## Quick Start
 
 ```bash
 git clone https://github.com/tansanrao/dotfiles ~/.dotfiles
 cd ~/.dotfiles
-./install.sh
+make install
 ```
 
-## Overview
+## Features
 
-This repository handles:
-- Tool installation via package managers
-- Plugin configuration for shell and terminal
-- Dotfile linking via GNU stow
+- **Declarative package management** - Brewfile for macOS, package lists for Linux
+- **GNU Stow integration** - Clean symlink management
+- **Cross-platform support** - macOS, Ubuntu, Fedora, Arch Linux
+- **Minimal complexity** - No custom bash libraries, leverage existing tools
+- **Host-specific configs** - Override defaults per machine
+- **Development tools** - mise for Node.js, Python, etc.
 
-### Supported Platforms
+## Architecture
 
-- macOS (Homebrew)
-- Ubuntu/Debian (apt)
-- RHEL/Fedora (dnf)
-- Arch Linux (pacman)
-
-### Configured Applications
-
-- Shell: zsh with pure prompt and syntax highlighting
-- Editor: Neovim
-- Terminal: Alacritty
-- Multiplexer: tmux
-- Version Control: git
-- Development tools: node, python (via mise)
-
-## Directory Structure
+### Repository Structure
 
 ```
-.
-├── install.sh          # Main installation script
-├── hosts/              # Host-specific configurations
-├── zsh/                # Zsh configuration
-├── git/                # Git configuration  
-├── neovim/             # Neovim configuration
-├── tmux/               # Tmux configuration
-├── alacritty/          # Alacritty configuration
-├── mise/               # Development tool configuration
-└── scripts/lib/        # Library functions
+~/.dotfiles/
+├── Makefile              # Main orchestration
+├── README.md             # This file
+├── .gitignore
+│
+├── packages/             # Declarative package management
+│   ├── Brewfile          # macOS packages (Homebrew)
+│   ├── Brewfile.work     # Host-specific additions (optional)
+│   ├── apt-packages.txt  # Ubuntu/Debian packages
+│   └── mise-tools.txt    # Development tools
+│
+├── stow/                 # GNU Stow packages (dotfiles)
+│   ├── alacritty/
+│   ├── git/
+│   ├── mise/
+│   ├── neovim/
+│   ├── tmux/
+│   └── zsh/
+│
+├── scripts/              # Bootstrap scripts
+│   ├── bootstrap-mac.sh
+│   ├── bootstrap-linux.sh
+│   └── install-plugins.sh
+│
+└── config/               # Host-specific overrides
+    ├── millennium-falcon/
+    └── death-star/
 ```
 
-## Installation
+### Core Principles
 
-Run the main script which detects your hostname and runs the appropriate setup:
+1. **Declarative over Imperative** - Define desired state, not steps
+2. **Use Standard Tools** - Leverage Homebrew Bundle, GNU Stow, Make
+3. **Minimal Custom Code** - Avoid complex bash scripting
+4. **Cross-Platform** - Clean separation of platform concerns
+5. **Idempotent** - Safe to run multiple times
+
+## Usage
+
+### Available Commands
 
 ```bash
-./install.sh
+make help           # Show all available commands
+make install        # Install everything for current platform
+make packages       # Install packages only
+make dotfiles       # Install dotfiles via stow
+make plugins        # Install zsh/tmux plugins
+make update         # Update packages and repository
+make clean          # Remove dotfile symlinks
+make status         # Show installation status
 ```
 
-This will:
-1. Install system packages
-2. Set up shell and tmux plugins
-3. Link dotfiles using stow
-4. Configure development tools with mise
+### Platform-Specific Commands
 
-## Host Configurations
+```bash
+make macos          # Full macOS setup
+make linux          # Full Linux setup
+make packages-macos # Install Homebrew packages
+make packages-linux # Install apt packages
+```
 
-The repository supports multiple hosts:
+### Development Tools
 
-- **millennium-falcon** - macOS development machine
-- **death-star** - Linux development machine
-- **x-wing** - Linux lab workstation
-- **wukong7** - Linux server
+```bash
+make mise-tools     # Install Node.js, Python, etc.
+```
 
-To create a new host configuration, add a setup script in `hosts/[hostname]/setup.sh`.
+## Package Management
 
-## Manual Setup
+### macOS (Homebrew)
 
-### Install System Packages
+Packages are defined in `packages/Brewfile`:
+
+```ruby
+# CLI tools
+brew "git"
+brew "neovim"
+brew "tmux"
+
+# GUI applications
+cask "alacritty"
+cask "slack"
+
+# Mac App Store apps
+mas "Xcode", id: 497799835
+```
+
+**Homebrew Bundle Commands:**
+```bash
+brew bundle --file=packages/Brewfile          # Install packages
+brew bundle dump --file=packages/Brewfile -f  # Generate from current
+brew bundle cleanup --file=packages/Brewfile  # Remove unlisted packages
+```
+
+### Linux (apt/dnf/pacman)
+
+Packages listed in `packages/apt-packages.txt`:
+
+```
+git
+neovim
+tmux
+zsh
+ripgrep
+```
+
+### Development Tools (mise)
+
+Tools defined in `packages/mise-tools.txt`:
+
+```
+node@lts
+python@3.12
+```
+
+## Dotfiles (GNU Stow)
+
+Each application has its own stow package in `stow/`:
+
+```
+stow/zsh/
+├── .zshenv
+└── .config/
+    └── zsh/
+        ├── .zshrc
+        └── aliases.zsh
+```
+
+**Stow Commands:**
+```bash
+stow -d stow -t ~ zsh        # Install zsh config
+stow -D -d stow -t ~ zsh     # Remove zsh config
+stow -d stow -t ~ */         # Install all configs
+```
+
+## Host-Specific Configuration
+
+### Override Packages
+
+Create host-specific Brewfiles:
+
+```bash
+# packages/Brewfile.millennium-falcon
+brew "docker"
+cask "sketch"
+```
+
+### Custom Configuration
+
+```bash
+mkdir -p config/$(hostname)
+# Add host-specific dotfile overrides
+```
+
+## Initial Setup
+
+### Prerequisites
+
+**macOS:**
+- Xcode Command Line Tools: `xcode-select --install`
+
+**Linux:**
+- sudo access for package installation
+- git (usually pre-installed)
+
+### Bootstrap Process
+
+1. **Clone repository**
+   ```bash
+   git clone https://github.com/username/dotfiles ~/.dotfiles
+   cd ~/.dotfiles
+   ```
+
+2. **Run setup**
+   ```bash
+   make install
+   ```
+
+3. **Post-installation**
+   ```bash
+   # Change shell to zsh (if not default)
+   chsh -s $(which zsh)
+
+   # Install tmux plugins (from within tmux)
+   # Press: prefix + I
+   ```
+
+## Customization
+
+### Adding New Packages
 
 **macOS:**
 ```bash
-./scripts/macos/setup.sh
+echo 'brew "new-tool"' >> packages/Brewfile
+make packages-macos
 ```
 
-**Ubuntu:**
+**Linux:**
 ```bash
-./scripts/ubuntu/setup.sh
+echo "new-tool" >> packages/apt-packages.txt
+make packages-linux
 ```
 
-### Link Dotfiles
-
-```bash
-# Install stow
-# macOS: brew install stow
-# Ubuntu: sudo apt install stow
-
-./scripts/common/stow-dotfiles.sh
-```
-
-### Set Up Development Tools
+### Adding New Dotfiles
 
 ```bash
-# Install mise
-curl https://mise.run | sh
-
-# Install development tools
-mise install
+mkdir -p stow/app/.config/app
+cp ~/.config/app/config.yml stow/app/.config/app/
+make dotfiles
 ```
+
+### Host-Specific Packages
+
+```bash
+make host-config  # Creates packages/Brewfile.$(hostname)
+```
+
+## Maintenance
+
+### Update Everything
+
+```bash
+make update
+```
+
+### Check Status
+
+```bash
+make status
+```
+
+### Remove Symlinks
+
+```bash
+make clean
+```
+
+### Backup Current Config
+
+```bash
+make backup
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Stow conflicts** - Remove existing files/symlinks before stowing
+2. **Permission errors** - Ensure proper sudo access on Linux
+3. **Missing tools** - Run platform bootstrap: `./scripts/bootstrap-mac.sh`
+
+### Debug Commands
+
+```bash
+make lint           # Check for common issues
+make status         # Show current state
+stow -n -v */      # Dry run stow (from stow/ directory)
+```
+
+### Manual Recovery
+
+```bash
+# Remove all symlinks and start fresh
+make clean
+make dotfiles
+
+# Re-run package installation
+make packages
+```
+
+- [GNU Stow Manual](https://www.gnu.org/software/stow/manual/stow.html)
+- [Homebrew Bundle](https://github.com/Homebrew/homebrew-bundle)
+- [mise Documentation](https://mise.jdx.dev/)
+- [Dotfiles Best Practices](https://dotfiles.github.io/)

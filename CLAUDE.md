@@ -4,110 +4,132 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This is a personal dotfiles repository that manages configuration files and development environment setup across multiple hosts using GNU stow, mise for development tools, and platform-specific package managers.
+This is a modern personal dotfiles repository that manages configuration files and development environment setup using GNU Stow, Homebrew Bundle, and Make for declarative, cross-platform package management.
 
 ## Core Architecture
 
-- **Host-based configuration**: Each machine has a specific setup in `hosts/[hostname]/setup.sh`
-- **Stow-based linking**: Dotfiles are organized in packages (zsh, git, neovim, tmux, alacritty, mise) and symlinked via GNU stow
-- **Library functions**: Common functionality is abstracted in `scripts/lib/` with platform-specific implementations
-- **Platform support**: macOS (Homebrew), Ubuntu/Debian (apt), RHEL/Fedora (dnf), Arch Linux (pacman)
+- **Makefile-driven**: Primary interface using make targets for all operations
+- **Declarative packages**: Brewfile for macOS, package lists for Linux  
+- **GNU Stow**: Symlink management for dotfiles in stow/ directory
+- **Minimal scripting**: Bootstrap scripts only, no complex bash libraries
+- **Cross-platform**: macOS (Homebrew), Ubuntu/Debian (apt), RHEL/Fedora (dnf), Arch Linux (pacman)
+
+## Repository Structure
+
+```
+~/.dotfiles/
+├── Makefile              # Main orchestration - primary interface
+├── README.md             # Comprehensive documentation
+├── packages/             # Declarative package management
+│   ├── Brewfile          # macOS packages (Homebrew Bundle)
+│   ├── apt-packages.txt  # Ubuntu/Debian packages
+│   └── mise-tools.txt    # Development tools (Node, Python)
+├── stow/                 # GNU Stow packages (dotfiles)
+│   ├── alacritty/
+│   ├── git/
+│   ├── mise/
+│   ├── neovim/
+│   ├── tmux/
+│   └── zsh/
+├── scripts/              # Minimal bootstrap scripts
+│   ├── bootstrap-mac.sh
+│   ├── bootstrap-linux.sh
+│   └── install-plugins.sh
+└── config/               # Optional host-specific overrides
+```
 
 ## Common Commands
 
-### Installation
+### Primary Interface (Makefile)
 ```bash
-# Full installation (detects hostname and runs host-specific setup)
-./install.sh
+# Main operations
+make install        # Install everything for current platform
+make help          # Show all available commands
+make packages      # Install packages only
+make dotfiles      # Install dotfiles via stow
+make plugins       # Install zsh/tmux plugins
 
-# Manual platform-specific installation
-./scripts/macos/setup.sh       # macOS
-./scripts/ubuntu/setup.sh      # Ubuntu/Debian
+# Platform-specific
+make macos         # Full macOS setup
+make linux         # Full Linux setup
+
+# Maintenance
+make update        # Update packages and repository
+make clean         # Remove dotfile symlinks
+make status        # Show installation status
 ```
 
-### Dotfiles Management
+### Package Management
+
+#### macOS (Homebrew Bundle)
 ```bash
-# Link all dotfiles packages
-./scripts/common/stow-dotfiles.sh
+# Install packages from Brewfile
+brew bundle --file=packages/Brewfile
 
-# Link specific package
-./scripts/common/stow-dotfiles.sh stow neovim
+# Generate Brewfile from current packages
+brew bundle dump --file=packages/Brewfile -f
 
-# Unlink package
-cd ~/.dotfiles && stow -D neovim
+# Remove packages not in Brewfile
+brew bundle cleanup --file=packages/Brewfile
+```
+
+#### Linux (Package Lists)
+```bash
+# Install packages from list
+xargs -a packages/apt-packages.txt sudo apt install -y
+```
+
+### Dotfiles Management (GNU Stow)
+```bash
+# Install all dotfiles
+cd stow && stow -t $HOME */
+
+# Install specific package
+cd stow && stow -t $HOME zsh
+
+# Remove dotfiles
+cd stow && stow -D -t $HOME */
 ```
 
 ### Development Tools (mise)
 ```bash
-# Install configured tools
-mise install
+# Install tools from list
+while read tool; do mise install "$tool"; done < packages/mise-tools.txt
 
-# Install specific tool
-mise install node@lts python@3.12
-
-# Use tool globally
-mise use -g node@lts
-
-# Check installed tools
-mise list
+# Use tools globally
+while read tool; do mise use -g "$tool"; done < packages/mise-tools.txt
 ```
 
-### Package Management
-```bash
-# macOS - install packages/casks
-brew install neovim tmux zsh
-brew install --cask alacritty discord
+## Key Files and Concepts
 
-# Update packages
-brew update && brew upgrade
-```
-
-### Tmux Plugin Management
-```bash
-# Install tmux plugins after linking dotfiles
-~/.config/tmux/plugins/tpm/bin/install_plugins
-
-# Update tmux plugins
-~/.config/tmux/plugins/tpm/bin/update_plugins
-
-# Remove unlisted plugins
-~/.config/tmux/plugins/tpm/bin/clean_plugins
-
-# Reload tmux config (from within tmux)
-prefix + R
-```
-
-## Key Files and Structure
-
-- `install.sh` - Main entry point, detects hostname and delegates to host-specific setup
-- `hosts/[hostname]/setup.sh` - Host-specific configuration (millennium-falcon, death-star, x-wing, wukong7)
-- `scripts/lib/common.sh` - Cross-platform functions (stow_packages, setup_shell_plugins, install_mise_tools)
-- `scripts/lib/macos.sh` - macOS-specific functions (install_homebrew, install_brew_packages, configure_dock)
-- `scripts/lib/linux.sh` - Linux-specific functions for various distributions
-- `scripts/common/stow-dotfiles.sh` - GNU stow wrapper for linking dotfiles packages
-
-## Configuration Packages
-
-Each application configuration is organized as a stow package:
-- `zsh/` - Shell configuration with pure prompt and syntax highlighting
-- `git/` - Git configuration and global ignore patterns
-- `neovim/` - Neovim configuration and plugins
-- `tmux/` - Terminal multiplexer configuration with TPM
-- `alacritty/` - Terminal emulator configuration
-- `mise/` - Development tool version management
+- `Makefile` - Primary interface, replaces complex bash scripts
+- `packages/Brewfile` - Declarative macOS package management
+- `packages/apt-packages.txt` - Simple Linux package list
+- `stow/*/` - Each subdirectory is a stow package for an application
+- `scripts/bootstrap-*.sh` - Minimal platform setup (install package managers)
+- `scripts/install-plugins.sh` - Zsh and tmux plugin installation
 
 ## Development Workflow
 
-1. **Adding new host**: Create `hosts/[hostname]/setup.sh` following existing patterns
-2. **Modifying dotfiles**: Edit files in respective package directories, run stow to update symlinks
-3. **Adding tools**: Update mise configuration in `mise/.config/mise/config.toml`
-4. **Platform packages**: Modify package lists in `scripts/lib/[platform].sh`
+1. **Adding packages**: Edit Brewfile or apt-packages.txt, run `make packages`
+2. **Adding dotfiles**: Create stow package directory, run `make dotfiles`
+3. **Host-specific config**: Use `make host-config` to create overrides
+4. **Testing changes**: Use `make clean && make install` for fresh setup
 
 ## Host Configurations
 
-- **millennium-falcon** - macOS development machine with full productivity stack
-- **death-star** - Linux development machine  
-- **x-wing** - Linux lab workstation
-- **wukong7** - Linux server with minimal setup
+The new approach supports host-specific configuration through:
+- `packages/Brewfile.$(hostname)` - Additional packages per host
+- `config/$(hostname)/` - Host-specific dotfile overrides
 
-New hosts should follow the pattern of sourcing library functions and defining package arrays for their specific needs.
+No complex host-specific setup scripts - keep it simple.
+
+## Migration Notes
+
+This repository was refactored from a complex host-based system to a modern, declarative approach:
+
+- **Removed**: Complex bash libraries, host-specific setup scripts
+- **Added**: Makefile orchestration, Brewfile, simplified bootstrap
+- **Kept**: GNU Stow, mise, cross-platform support
+
+The new structure follows 2024-2025 best practices for dotfiles management.

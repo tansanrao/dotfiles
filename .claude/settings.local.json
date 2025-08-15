@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(chmod:*)",
+      "Bash(rm:*)",
+      "Bash(git rm:*)"
+    ],
+    "defaultMode": "acceptEdits"
+  }
+}

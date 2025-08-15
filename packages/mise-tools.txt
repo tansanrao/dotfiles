@@ -1,0 +1,2 @@
+node@lts
+python@3.12

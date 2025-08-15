@@ -1,0 +1,16 @@
+curl
+wget
+git
+build-essential
+stow
+neovim
+tmux
+zsh
+ripgrep
+fd-find
+fzf
+bat
+htop
+jq
+tree
+rsync
