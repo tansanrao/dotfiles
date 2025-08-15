@@ -70,10 +70,6 @@ if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh --cmd cd)"
 fi
 
-# direnv
-if command -v direnv >/dev/null 2>&1; then
-  eval "$(direnv hook zsh)"
-fi
 
 # mise (development tools)
 if command -v mise >/dev/null 2>&1; then
@@ -91,5 +87,9 @@ fi
 # Syntax highlighting (will be installed via scripts)
 if [[ -f ~/.config/zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
   source ~/.config/zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-fi 
-. "$HOME/.local/bin/env"
+fi
+
+# Source local environment file if it exists
+if [[ -f "$HOME/.local/bin/env" ]]; then
+  source "$HOME/.local/bin/env"
+fi

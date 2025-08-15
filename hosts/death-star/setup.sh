@@ -17,13 +17,13 @@ HOSTNAME="death-star"
 # Check we're on Linux
 check_linux || exit 1
 
-# Define packages for this host
-ESSENTIAL_PACKAGES=($(get_essential_packages))
-DEV_PACKAGES=($(get_development_packages))
-UTILITY_PACKAGES=($(get_utility_packages))
+# Define packages for this host (shell-only development machine)
+# Using default CLI packages from linux.sh
+CLI_PACKAGES=($(get_cli_packages))
+GUI_PACKAGES=()  # No GUI packages for this shell-only machine
 
-# Define dotfiles
-DOTFILES_PACKAGES=($(get_development_dotfiles))
+# Define dotfiles (no GUI apps like alacritty on shell-only machine)
+DOTFILES_PACKAGES=(zsh git neovim tmux mise)
 
 # Define mise tools
 MISE_TOOLS=($(get_development_mise_tools))
@@ -34,7 +34,7 @@ main() {
     update_packages
     
     # Install packages
-    install_system_packages "${ESSENTIAL_PACKAGES[@]}" "${DEV_PACKAGES[@]}" "${UTILITY_PACKAGES[@]}"
+    install_system_packages "${CLI_PACKAGES[@]}" "${GUI_PACKAGES[@]}"
     
     # Install development tools
     install_development_tools

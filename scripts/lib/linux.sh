@@ -95,10 +95,6 @@ install_development_tools() {
         curl -sSf https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
     fi
     
-    # Install direnv
-    if ! command -v direnv &> /dev/null; then
-        curl -sfL https://direnv.net/install.sh | bash
-    fi
 }
 
 # Fix command names on Ubuntu (bat -> batcat, fd -> fdfind)
@@ -133,45 +129,29 @@ change_shell_to_zsh() {
     fi
 }
 
-# Common package sets for easy reuse
-get_essential_packages() {
+# Default package lists - override in host-specific scripts
+get_cli_packages() {
     local distro=$(detect_linux_distro)
     
+    # CLI packages for development and utilities
     case "$distro" in
         debian)
-            echo "curl wget git build-essential stow"
+            echo "curl wget git build-essential stow neovim tmux zsh ripgrep fd-find fzf bat htop jq tree rsync"
             ;;
         rhel)
-            echo "curl wget git gcc gcc-c++ make stow"
+            echo "curl wget git gcc gcc-c++ make stow neovim tmux zsh ripgrep fd-find fzf bat htop jq tree rsync"
             ;;
         arch)
-            echo "curl wget git base-devel stow"
+            echo "curl wget git base-devel stow neovim tmux zsh ripgrep fd fzf bat htop jq tree rsync"
             ;;
         *)
-            echo "curl wget git stow"
+            echo "curl wget git stow neovim tmux zsh htop rsync"
             ;;
     esac
 }
 
-get_development_packages() {
-    local distro=$(detect_linux_distro)
-    
-    case "$distro" in
-        debian)
-            echo "neovim tmux zsh ripgrep fd-find fzf bat htop"
-            ;;
-        rhel)
-            echo "neovim tmux zsh ripgrep fd-find fzf bat htop"
-            ;;
-        arch)
-            echo "neovim tmux zsh ripgrep fd fzf bat htop"
-            ;;
-        *)
-            echo "neovim tmux zsh"
-            ;;
-    esac
-}
-
-get_utility_packages() {
-    echo "jq tree rsync"
+get_gui_packages() {
+    # GUI applications - empty by default as most Linux hosts are servers
+    # Override in host-specific scripts for desktop machines
+    echo ""
 } 

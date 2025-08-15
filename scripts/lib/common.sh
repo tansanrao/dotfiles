@@ -122,6 +122,10 @@ get_development_dotfiles() {
     echo "zsh git neovim tmux alacritty mise"
 }
 
+get_server_dotfiles() {
+    echo "zsh git neovim tmux"
+}
+
 # Common mise tool sets
 get_essential_mise_tools() {
     echo "node@lts python@3.12"
@@ -129,6 +133,10 @@ get_essential_mise_tools() {
 
 get_development_mise_tools() {
     echo "node@lts python@3.12"
+}
+
+get_server_mise_tools() {
+    echo ""
 }
 
 # Create host-specific directories

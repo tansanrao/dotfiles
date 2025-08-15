@@ -17,20 +17,24 @@ HOSTNAME="millennium-falcon"
 # Check we're on macOS
 check_macos || exit 1
 
-# Define packages for this host
-ESSENTIAL_PACKAGES=($(get_essential_packages))
-DEV_PACKAGES=($(get_development_packages))
-DEV_TOOLS_PACKAGES=($(get_dev_tools_packages))
+# DECLARATIVE PACKAGE MANAGEMENT
+# Only packages listed below will remain installed
+# Any brew packages/casks not in these lists will be REMOVED
+# MAS apps cannot be removed via CLI but will be reported
+#
+# To skip removal of unlisted packages (install-only mode):
+#   SKIP_REMOVAL=1 ./setup.sh
 
-# Define casks
-ESSENTIAL_CASKS=($(get_essential_casks))
-DEV_CASKS=($(get_development_casks))
-PRODUCTIVITY_CASKS=($(get_productivity_casks))
+# Override default package lists for this host if needed
+# Using defaults from macos.sh which include all packages
+BREW_PACKAGES=($(get_brew_packages))
+BREW_CASKS=($(get_brew_casks))
+MAS_APPS=($(get_mas_apps))
 
-# Define MAS apps
-ESSENTIAL_MAS_APPS=($(get_essential_mas_apps))
-DEV_MAS_APPS=($(get_development_mas_apps))
-PRODUCTIVITY_MAS_APPS=($(get_productivity_mas_apps))
+# Example of how to override with custom lists:
+# BREW_PACKAGES=("curl" "wget" "git" "stow" "neovim" "tmux")
+# BREW_CASKS=("alacritty" "discord")
+# MAS_APPS=("937984704")  # Amphetamine
 
 # Define dotfiles
 DOTFILES_PACKAGES=($(get_development_dotfiles))
@@ -54,35 +58,35 @@ DOCK_APPS=(
 main() {
     # Install Homebrew
     install_homebrew
-    
-    # Install packages
-    install_brew_packages "${ESSENTIAL_PACKAGES[@]}" "${DEV_PACKAGES[@]}" "${DEV_TOOLS_PACKAGES[@]}"
-    install_brew_casks "${ESSENTIAL_CASKS[@]}" "${DEV_CASKS[@]}" "${PRODUCTIVITY_CASKS[@]}"
-    install_mas_apps "${ESSENTIAL_MAS_APPS[@]}" "${DEV_MAS_APPS[@]}" "${PRODUCTIVITY_MAS_APPS[@]}"
-    
+
+    # Install packages declaratively (removes unlisted packages)
+    setup_brew_declaratively "${BREW_PACKAGES[@]}"
+    setup_casks_declaratively "${BREW_CASKS[@]}"
+    setup_mas_declaratively "${MAS_APPS[@]}"
+
     # Configure dock
-    configure_dock "${DOCK_APPS[@]}"
-    
+    # configure_dock "${DOCK_APPS[@]}"
+
     # Configure macOS system defaults
     configure_system_defaults
-    
+
     # Set hostname
     set_hostname "$HOSTNAME"
-    
+
     # Create directories
     create_host_directories "$HOME/workspace"
-    
+
     # Setup shell and tmux plugins
     setup_shell_plugins
     setup_tmux_plugins
-    
+
     # Stow dotfiles
     stow_packages "${DOTFILES_PACKAGES[@]}"
-    
+
     # Setup mise tools
     install_mise_tools "${MISE_TOOLS[@]}"
     use_mise_tools_globally "${MISE_TOOLS[@]}"
 }
 
 # Run main function
-main "$@" 
+main "$@"

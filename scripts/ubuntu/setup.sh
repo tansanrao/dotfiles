@@ -47,10 +47,6 @@ if ! command -v zoxide &> /dev/null; then
     curl -sSf https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash
 fi
 
-# Install direnv
-if ! command -v direnv &> /dev/null; then
-    curl -sfL https://direnv.net/install.sh | bash
-fi
 
 # Fix bat command name (it's called batcat on Ubuntu)
 if command -v batcat &> /dev/null && ! command -v bat &> /dev/null; then

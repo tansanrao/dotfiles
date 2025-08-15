@@ -17,16 +17,34 @@ HOSTNAME="wukong7"
 # Check we're on Linux
 check_linux || exit 1
 
-# Define packages for this host
-ESSENTIAL_PACKAGES=($(get_essential_packages))
-DEV_PACKAGES=($(get_development_packages))
-UTILITY_PACKAGES=($(get_utility_packages))
+# Define packages for this host (minimal server setup)
+# Override with minimal packages for server
+get_cli_packages() {
+    local distro=$(detect_linux_distro)
+    case "$distro" in
+        debian)
+            echo "curl wget git build-essential stow neovim tmux zsh htop rsync"
+            ;;
+        rhel)
+            echo "curl wget git gcc gcc-c++ make stow neovim tmux zsh htop rsync"
+            ;;
+        arch)
+            echo "curl wget git base-devel stow neovim tmux zsh htop rsync"
+            ;;
+        *)
+            echo "curl wget git stow neovim tmux zsh htop rsync"
+            ;;
+    esac
+}
 
-# Define dotfiles
-DOTFILES_PACKAGES=($(get_development_dotfiles))
+CLI_PACKAGES=($(get_cli_packages))
+GUI_PACKAGES=()  # No GUI packages for server
 
-# Define mise tools
-MISE_TOOLS=($(get_essential_mise_tools))
+# Define dotfiles (no GUI tools for server)
+DOTFILES_PACKAGES=($(get_server_dotfiles))
+
+# Define mise tools (none for server)
+MISE_TOOLS=($(get_server_mise_tools))
 
 # Main setup function
 main() {
@@ -34,13 +52,10 @@ main() {
     update_packages
     
     # Install packages
-    install_system_packages "${ESSENTIAL_PACKAGES[@]}" "${DEV_PACKAGES[@]}" "${UTILITY_PACKAGES[@]}"
+    install_system_packages "${CLI_PACKAGES[@]}" "${GUI_PACKAGES[@]}"
     
-    # Install development tools
-    install_development_tools
-    
-    # Fix Ubuntu command names if needed
-    fix_ubuntu_commands
+    # Skip development tools like mise, zoxide on server
+    # fix_ubuntu_commands not needed without fd/bat
     
     # Set hostname
     set_hostname "$HOSTNAME"
@@ -55,9 +70,7 @@ main() {
     # Stow dotfiles
     stow_packages "${DOTFILES_PACKAGES[@]}"
     
-    # Setup mise tools
-    install_mise_tools "${MISE_TOOLS[@]}"
-    use_mise_tools_globally "${MISE_TOOLS[@]}"
+    # Skip mise tools on server (none configured)
     
     # Change shell to zsh
     change_shell_to_zsh

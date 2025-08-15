@@ -105,41 +105,163 @@ configure_dock() {
     killall Dock
 }
 
-# Common package sets for easy reuse
-get_essential_packages() {
-    echo "curl wget git stow"
+# Default package lists - override in host-specific scripts
+get_brew_packages() {
+    # Essential tools + Development tools + Utilities
+    echo "curl wget git stow neovim tmux zsh ripgrep fd fzf bat htop mise zoxide texlive jq tree"
 }
 
-get_development_packages() {
-    echo "neovim tmux zsh ripgrep fd fzf bat htop mise zoxide texlive"
+get_brew_casks() {
+    # Essential casks + Development casks + Productivity casks
+    echo "alacritty discord logi-options+ zed font-im-writing-nerd-font font-ia-writer-mono font-ia-writer-duo font-ia-writer-quattro orbstack slack obsidian rectangle zotero skim zoom"
 }
 
-get_dev_tools_packages() {
-    echo "jq tree"
-}
-
-get_essential_casks() {
-    echo "alacritty discord logi-options+"
-}
-
-get_development_casks() {
-    echo "zed font-im-writing-nerd-font font-ia-writer-mono font-ia-writer-duo font-ia-writer-quattro orbstack"
-}
-
-get_productivity_casks() {
-    echo "slack obsidian rectangle zotero skim zoom"
-}
-
-get_essential_mas_apps() {
+get_mas_apps() {
+    # Mac App Store apps with comments
     echo "937984704"  # Amphetamine
-}
-
-get_development_mas_apps() {
-    echo "497799835"   # Xcode
-}
-
-get_productivity_mas_apps() {
+    echo "497799835"  # Xcode
     echo "975937182"  # Fantastical
+}
+
+# Declarative package management functions
+
+# Get currently installed brew packages (excluding dependencies)
+get_installed_brew_packages() {
+    brew leaves 2>/dev/null | tr '\n' ' '
+}
+
+# Get currently installed brew casks
+get_installed_brew_casks() {
+    brew list --cask 2>/dev/null | tr '\n' ' '
+}
+
+# Get currently installed MAS apps (IDs only)
+get_installed_mas_apps() {
+    if command -v mas &> /dev/null; then
+        mas list 2>/dev/null | awk '{print $1}' | tr '\n' ' '
+    fi
+}
+
+# Remove brew packages not in the desired list
+remove_unlisted_brew_packages() {
+    local desired=("$@")
+    local installed=($(get_installed_brew_packages))
+    
+    # Create associative array for desired packages
+    declare -A desired_map
+    for pkg in "${desired[@]}"; do
+        desired_map["$pkg"]=1
+    done
+    
+    # Find and remove packages not in desired list
+    for pkg in "${installed[@]}"; do
+        if [[ -z "${desired_map[$pkg]}" ]]; then
+            print_info "Removing unlisted brew package: $pkg"
+            brew uninstall --force "$pkg" 2>/dev/null || true
+        fi
+    done
+}
+
+# Remove brew casks not in the desired list
+remove_unlisted_brew_casks() {
+    local desired=("$@")
+    local installed=($(get_installed_brew_casks))
+    
+    # Create associative array for desired casks
+    declare -A desired_map
+    for cask in "${desired[@]}"; do
+        desired_map["$cask"]=1
+    done
+    
+    # Find and remove casks not in desired list
+    for cask in "${installed[@]}"; do
+        if [[ -z "${desired_map[$cask]}" ]]; then
+            print_info "Removing unlisted brew cask: $cask"
+            brew uninstall --cask --force "$cask" 2>/dev/null || true
+        fi
+    done
+}
+
+# Remove MAS apps not in the desired list
+remove_unlisted_mas_apps() {
+    local desired=("$@")
+    local installed=($(get_installed_mas_apps))
+    
+    # Create associative array for desired apps
+    declare -A desired_map
+    for app_id in "${desired[@]}"; do
+        desired_map["$app_id"]=1
+    done
+    
+    # Find apps not in desired list (MAS doesn't support uninstall via CLI)
+    local unlisted=()
+    for app_id in "${installed[@]}"; do
+        if [[ -z "${desired_map[$app_id]}" ]]; then
+            unlisted+=("$app_id")
+        fi
+    done
+    
+    if [[ ${#unlisted[@]} -gt 0 ]]; then
+        print_warning "The following MAS apps are not in your desired list but cannot be removed via CLI:"
+        for app_id in "${unlisted[@]}"; do
+            local app_name=$(mas list | grep "^$app_id" | cut -d' ' -f2-)
+            echo "  - $app_name (ID: $app_id)"
+        done
+        echo "Please remove them manually via Launchpad or Finder if desired."
+    fi
+}
+
+# Declarative setup - ensures only specified packages are installed
+setup_brew_declaratively() {
+    local packages=("$@")
+    
+    print_info "Setting up Homebrew packages declaratively..."
+    
+    # Install desired packages
+    install_brew_packages "${packages[@]}"
+    
+    # Remove unlisted packages (unless SKIP_REMOVAL is set)
+    if [[ -z "${SKIP_REMOVAL:-}" ]]; then
+        remove_unlisted_brew_packages "${packages[@]}"
+        # Clean up
+        brew autoremove 2>/dev/null || true
+    else
+        print_warning "Skipping removal of unlisted packages (SKIP_REMOVAL is set)"
+    fi
+}
+
+# Declarative setup for casks
+setup_casks_declaratively() {
+    local casks=("$@")
+    
+    print_info "Setting up Homebrew casks declaratively..."
+    
+    # Install desired casks
+    install_brew_casks "${casks[@]}"
+    
+    # Remove unlisted casks (unless SKIP_REMOVAL is set)
+    if [[ -z "${SKIP_REMOVAL:-}" ]]; then
+        remove_unlisted_brew_casks "${casks[@]}"
+    else
+        print_warning "Skipping removal of unlisted casks (SKIP_REMOVAL is set)"
+    fi
+}
+
+# Declarative setup for MAS apps
+setup_mas_declaratively() {
+    local apps=("$@")
+    
+    print_info "Setting up Mac App Store apps declaratively..."
+    
+    # Install desired apps
+    install_mas_apps "${apps[@]}"
+    
+    # Check for unlisted apps (cannot remove programmatically)
+    if [[ -z "${SKIP_REMOVAL:-}" ]]; then
+        remove_unlisted_mas_apps "${apps[@]}"
+    else
+        print_warning "Skipping check for unlisted MAS apps (SKIP_REMOVAL is set)"
+    fi
 }
 
 # Configure macOS system defaults
