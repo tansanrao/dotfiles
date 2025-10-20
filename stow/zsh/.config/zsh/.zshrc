@@ -1,102 +1,113 @@
-# ~/.config/zsh/.zshrc
-# Main zsh configuration file
+# ---------- OS helpers ----------
+is_macos() { [[ "$(uname -s)" == "Darwin" ]]; }
+is_linux() { [[ "$(uname -s)" == "Linux" ]]; }
 
-# History settings
-HISTSIZE=10000
-SAVEHIST=10000
-HISTFILE=~/.zsh_history
-setopt SHARE_HISTORY
-setopt HIST_IGNORE_DUPS
-
-# Enable completion system
-autoload -Uz compinit
-compinit
-
-# Enable vi mode
-bindkey -v
-
-# Aliases
-alias ls="ls --color=auto"
-alias ll="ls -la"
-alias vi="nvim"
-alias vim="nvim"
-
-# Helper functions
-# For when tmux attach causes problems with old agent in envvars
-function fixssh() {
-  eval $(tmux show-env -s |grep '^SSH_')
-}
-
-# remove from known_hosts helper
+# ---------- remove from known_hosts helper ----------
 function rmkeys() {
-  ssh-keygen -f "$HOME/.ssh/known_hosts" -R $1
+  ssh-keygen -f "$HOME/.ssh/known_hosts" -R "$1"
 }
 
-# SSH through multiple jump hosts
+# ---------- SSH through multiple jump hosts ----------
 function jump() {
-  # Check for minimum number of arguments (1 jump host + 1 final host)
   if (( $# < 2 )); then
-    echo "Usage: jump host1 [host2 ... hostN]" >&2 
+    echo "Usage: jump host1 [host2 ... hostN]" >&2
     return 1
   fi
-
   local -a hosts=("$@")
   local last_host="${hosts[-1]}"
   local -a proxies=("${hosts[@]:0:$#hosts-1}")
   local jump_string="${(j:,:)proxies}"
-
   ssh -A -J "${jump_string}" "${last_host}"
 }
 
-# Load tool integrations if available
-# fzf
-if command -v fzf >/dev/null 2>&1; then
-  # Enable fzf key bindings and fuzzy completion (Homebrew installation)
-  if [[ -f /opt/homebrew/opt/fzf/shell/key-bindings.zsh ]]; then
-    source /opt/homebrew/opt/fzf/shell/key-bindings.zsh
-  fi
-
-  if [[ -f /opt/homebrew/opt/fzf/shell/completion.zsh ]]; then
-    source /opt/homebrew/opt/fzf/shell/completion.zsh
-  fi
-
-  # fzf configuration
-  export FZF_DEFAULT_COMMAND='fd --type f --hidden --exclude .git'
-  export FZF_DEFAULT_OPTS='--height 30% --layout=reverse --border'
-  export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+# ---------- make `fd` available on Ubuntu (symlink fdfind -> fd) ----------
+# Put ~/.local/bin early on PATH so our symlink is picked up
+if [[ -d "$HOME/.local/bin" ]]; then
+  export PATH="$HOME/.local/bin:$PATH"
+else
+  mkdir -p "$HOME/.local/bin"
+  export PATH="$HOME/.local/bin:$PATH"
 fi
 
-# zoxide (smarter cd command)
+# On Linux/Ubuntu, `fd` is often installed as `fdfind`. If `fd` is missing,
+# create a user-local symlink so tools can just call `fd`.
+if is_linux; then
+  if ! command -v fd >/dev/null 2>&1 && command -v fdfind >/dev/null 2>&1; then
+    ln -sf "$(command -v fdfind)" "$HOME/.local/bin/fd"
+  fi
+fi
+
+# ---------- homebrew prefix (macOS + Linuxbrew) ----------
+if command -v brew >/dev/null 2>&1; then
+  export BREW_PREFIX="$(brew --prefix)"
+fi
+
+# ---------- fzf ----------
+if command -v fzf >/dev/null 2>&1; then
+  # Try Homebrew paths first (macOS or Linuxbrew)
+  if [[ -n "$BREW_PREFIX" ]]; then
+    [[ -f "$BREW_PREFIX/opt/fzf/shell/key-bindings.zsh" ]] && source "$BREW_PREFIX/opt/fzf/shell/key-bindings.zsh"
+    [[ -f "$BREW_PREFIX/opt/fzf/shell/completion.zsh"   ]] && source "$BREW_PREFIX/opt/fzf/shell/completion.zsh"
+  fi
+  # Debian/Ubuntu package paths
+  [[ -f /usr/share/doc/fzf/examples/key-bindings.zsh     ]] && source /usr/share/doc/fzf/examples/key-bindings.zsh
+  [[ -f /usr/share/doc/fzf/examples/completion.zsh       ]] && source /usr/share/doc/fzf/examples/completion.zsh
+
+  if command -v fd >/dev/null 2>&1; then
+    export FZF_DEFAULT_COMMAND="fd --type f --hidden --exclude .git"
+    export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+  else
+    export FZF_DEFAULT_COMMAND='find . -type f -not -path "*/\.git/*"'
+    export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+  fi
+
+  export FZF_DEFAULT_OPTS='--height 30% --layout=reverse --border'
+fi
+
+# ---------- zoxide ----------
 if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh --cmd cd)"
 fi
 
-
-# mise (development tools)
+# ---------- mise (development tools) ----------
 if command -v mise >/dev/null 2>&1; then
   eval "$(mise activate zsh)"
 fi
 
-# Pure prompt setup
-if [[ -d ~/.config/zsh/pure ]]; then
-  fpath+=(~/.config/zsh/pure)
-  autoload -U promptinit
-  promptinit
+# ---------- Pure prompt ----------
+# Your custom clone:
+if [[ -d "$HOME/.config/zsh/pure" ]]; then
+  fpath+=("$HOME/.config/zsh/pure")
+fi
+
+autoload -U promptinit
+promptinit
+# Only attempt to use Pure if it’s available
+if whence -w prompt_pure_setup >/dev/null 2>&1 || whence -w prompt_pure >/dev/null 2>&1; then
   prompt pure
 fi
 
-# Syntax highlighting
-if [[ -f ~/.config/zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]]; then
-  source ~/.config/zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+# ---------- Syntax highlighting ----------
+# Your custom path:
+if [[ -f "$HOME/.config/zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]]; then
+  source "$HOME/.config/zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 fi
 
-# Source local environment file if it exists
-if [[ -f "$HOME/.local/bin/env" ]]; then
-  source "$HOME/.local/bin/env"
-fi
+# ---------- Local environment ----------
+[[ -f "$HOME/.local/bin/env" ]] && source "$HOME/.local/bin/env"
 
-if [[ -d ~/.nvm ]]; then
+# ---------- nvm ----------
+if [[ -d "$HOME/.nvm" ]]; then
   export NVM_DIR="$HOME/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+  [[ -s "$NVM_DIR/nvm.sh" ]] && . "$NVM_DIR/nvm.sh"
+  [[ -s "$NVM_DIR/bash_completion" ]] && . "$NVM_DIR/bash_completion"
 fi
+
+# ---------- macOS-specific niceties (safe no-ops on Linux) ----------
+if is_macos; then
+  # Prefer Homebrew coreutils (if installed) for consistent behavior
+  if [[ -n "$BREW_PREFIX" && -d "$BREW_PREFIX/opt/coreutils/libexec/gnubin" ]]; then
+    export PATH="$BREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
+  fi
+fi
+
