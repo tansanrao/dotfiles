@@ -1,0 +1,24 @@
+# macOS
+.DS_Store
+
+# Editor directories and files
+.idea
+.vscode
+*.swp
+*.swo
+*~
+
+# Backup files
+backup/
+
+# Plugin directories (managed by install-plugins.sh)
+stow/tmux/.config/tmux/plugins/
+stow/zsh/.config/zsh/pure/
+stow/zsh/.config/zsh/zsh-syntax-highlighting/
+
+# Local configuration overrides
+*.local
+
+# Temporary files
+*.tmp
+*.bak
