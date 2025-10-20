@@ -21,7 +21,6 @@ brew "zoxide"
 brew "jq"
 brew "yq"
 brew "tree"
-brew "nvm"
 brew "uv"
 
 # Casks - GUI Applications
