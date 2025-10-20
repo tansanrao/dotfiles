@@ -1,0 +1,6 @@
+# Enable shell integration for working directory preservation
+shell-integration = detect
+shell-integration-features = sudo,cursor,title,ssh-env,ssh-terminfo
+
+# Control auto-update behavior to avoid surprise restarts
+auto-update = check
