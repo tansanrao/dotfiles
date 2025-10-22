@@ -20,6 +20,25 @@ function jump() {
   ssh -A -J "${jump_string}" "${last_host}"
 }
 
+# ---------- Shared history (common across all shells) ----------
+# Where to store history
+HISTFILE="${ZDOTDIR:-$HOME}/.zsh_history"
+HISTSIZE=500000          # in-memory history lines
+SAVEHIST=500000          # lines to save to $HISTFILE
+
+# Write each command to $HISTFILE as soon as it’s executed
+setopt INC_APPEND_HISTORY        # append immediately
+setopt SHARE_HISTORY             # import new lines from other sessions
+
+# Make the history cleaner and search nicer
+setopt EXTENDED_HISTORY          # record timestamps, etc.
+setopt HIST_IGNORE_DUPS          # ignore consecutive dups
+setopt HIST_SAVE_NO_DUPS         # don't save duplicates
+setopt HIST_FIND_NO_DUPS         # don't show dups in searches
+setopt HIST_REDUCE_BLANKS        # trim superfluous spaces
+setopt HIST_IGNORE_SPACE         # commands starting with a space aren't saved
+setopt HIST_EXPIRE_DUPS_FIRST    # expire older dups first when trimming
+
 # ---------- make `fd` available on Ubuntu (symlink fdfind -> fd) ----------
 # Put ~/.local/bin early on PATH so our symlink is picked up
 if [[ -d "$HOME/.local/bin" ]]; then

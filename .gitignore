@@ -22,3 +22,7 @@ stow/zsh/.config/zsh/zsh-syntax-highlighting/
 # Temporary files
 *.tmp
 *.bak
+
+# Zsh local files
+stow/zsh/.config/zsh/.zcompdump
+stow/zsh/.config/zsh/.zsh_history
