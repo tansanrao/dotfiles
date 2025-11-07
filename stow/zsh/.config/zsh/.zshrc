@@ -127,3 +127,9 @@ if [ -d "$FNM_PATH" ]; then
   eval "`fnm env --version-file-strategy=recursive --corepack-enabled --use-on-cd --shell zsh`"
 fi
 
+# fnm ubuntu
+FNM_PATH="/home/tansanrao/.local/share/fnm"
+if [ -d "$FNM_PATH" ]; then
+  export PATH="$FNM_PATH:$PATH"
+  eval "`fnm env --version-file-strategy=recursive --corepack-enabled --use-on-cd --shell zsh`"
+fi
