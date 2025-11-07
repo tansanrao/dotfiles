@@ -94,7 +94,6 @@ if command -v mise >/dev/null 2>&1; then
 fi
 
 # ---------- Pure prompt ----------
-# Your custom clone:
 if [[ -d "$HOME/.config/zsh/pure" ]]; then
   fpath+=("$HOME/.config/zsh/pure")
 fi
@@ -107,7 +106,6 @@ if whence -w prompt_pure_setup >/dev/null 2>&1 || whence -w prompt_pure >/dev/nu
 fi
 
 # ---------- Syntax highlighting ----------
-# Your custom path:
 if [[ -f "$HOME/.config/zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]]; then
   source "$HOME/.config/zsh/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 fi
@@ -115,18 +113,17 @@ fi
 # ---------- Local environment ----------
 [[ -f "$HOME/.local/bin/env" ]] && source "$HOME/.local/bin/env"
 
-# ---------- nvm ----------
-if [[ -d "$HOME/.nvm" ]]; then
-  export NVM_DIR="$HOME/.nvm"
-  [[ -s "$NVM_DIR/nvm.sh" ]] && . "$NVM_DIR/nvm.sh"
-  [[ -s "$NVM_DIR/bash_completion" ]] && . "$NVM_DIR/bash_completion"
-fi
-
 # ---------- macOS-specific niceties (safe no-ops on Linux) ----------
 if is_macos; then
   # Prefer Homebrew coreutils (if installed) for consistent behavior
   if [[ -n "$BREW_PREFIX" && -d "$BREW_PREFIX/opt/coreutils/libexec/gnubin" ]]; then
     export PATH="$BREW_PREFIX/opt/coreutils/libexec/gnubin:$PATH"
   fi
+fi
+
+# fnm
+FNM_PATH="/opt/homebrew/opt/fnm/bin"
+if [ -d "$FNM_PATH" ]; then
+  eval "`fnm env --version-file-strategy=recursive --corepack-enabled --use-on-cd --shell zsh`"
 fi
 
