@@ -121,7 +121,7 @@ if is_macos; then
   fi
 fi
 
-# fnm
+# fnm homebrew
 FNM_PATH="/opt/homebrew/opt/fnm/bin"
 if [ -d "$FNM_PATH" ]; then
   eval "`fnm env --version-file-strategy=recursive --corepack-enabled --use-on-cd --shell zsh`"

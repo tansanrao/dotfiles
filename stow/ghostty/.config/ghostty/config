@@ -1,5 +1,5 @@
 # Theme config
-theme = dark:rose pine,light:rose pine dawn
+theme = light:Gruvbox Light Hard,dark:Gruvbox Dark Hard
 
 # Enable shell integration
 shell-integration = detect
