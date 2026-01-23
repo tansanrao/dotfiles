@@ -1,5 +1,5 @@
 # Theme config
-theme = light:Gruvbox Light Hard,dark:Gruvbox Dark Hard
+theme = Gruvbox Dark Hard
 
 # Enable shell integration
 shell-integration = detect
