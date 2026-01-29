@@ -68,6 +68,9 @@ if command -v fzf >/dev/null 2>&1; then
     [[ -f "$BREW_PREFIX/opt/fzf/shell/key-bindings.zsh" ]] && source "$BREW_PREFIX/opt/fzf/shell/key-bindings.zsh"
     [[ -f "$BREW_PREFIX/opt/fzf/shell/completion.zsh"   ]] && source "$BREW_PREFIX/opt/fzf/shell/completion.zsh"
   fi
+  # Fedora package paths
+  [[ -f /usr/share/fzf/shell/key-bindings.zsh           ]] && source /usr/share/fzf/shell/key-bindings.zsh
+  [[ -f /usr/share/fzf/shell/completion.zsh             ]] && source /usr/share/fzf/shell/completion.zsh
   # Debian/Ubuntu package paths
   [[ -f /usr/share/doc/fzf/examples/key-bindings.zsh     ]] && source /usr/share/doc/fzf/examples/key-bindings.zsh
   [[ -f /usr/share/doc/fzf/examples/completion.zsh       ]] && source /usr/share/doc/fzf/examples/completion.zsh

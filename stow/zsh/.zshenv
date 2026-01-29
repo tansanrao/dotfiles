@@ -6,4 +6,6 @@ export ZDOTDIR="$HOME/.config/zsh"
 if [[ -f "$ZDOTDIR/.zshrc" ]]; then
   source "$ZDOTDIR/.zshrc"
 fi 
-. "$HOME/.cargo/env"
+if [[ -f "$HOME/.cargo/env" ]]; then
+  . "$HOME/.cargo/env"
+fi
