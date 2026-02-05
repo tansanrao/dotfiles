@@ -12,6 +12,5 @@ chmod +x install.sh scripts/bootstrap-*.sh
 ## Supported Hosts
 - macOS (Homebrew + Brewfile)
 - Fedora
-- CentOS Stream / Rocky / RHEL 10
 
 

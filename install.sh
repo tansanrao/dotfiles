@@ -29,10 +29,6 @@ run_bootstrap() {
           echo "INFO: Bootstrapping Fedora..."
           bash "$REPO_ROOT/scripts/bootstrap-fedora.sh"
           ;;
-        rhel|rocky|centos)
-          echo "INFO: Bootstrapping RHEL 10 family..."
-          bash "$REPO_ROOT/scripts/bootstrap-rhel10.sh"
-          ;;
         *)
           echo "ERROR: Unsupported Linux distro ID: ${ID:-unknown}" >&2
           exit 1
