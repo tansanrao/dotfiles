@@ -1,12 +1,17 @@
 # Dotfiles
-A clean, declarative dotfiles repository using GNU Stow, Homebrew Bundle, and Make for cross-platform development environment management.
+A clean, declarative dotfiles repository using GNU Stow and simple bootstrap scripts for cross-platform development environment management.
 
 ## Quick Start
 ```
 git clone https://github.com/tansanrao/dotfiles ~/.dotfiles
 cd ~/.dotfiles
-make bootstrap-mac
-make install
+chmod +x install.sh scripts/bootstrap-*.sh
+./install.sh
 ```
+
+## Supported Hosts
+- macOS (Homebrew + Brewfile)
+- Fedora
+- CentOS Stream / Rocky / RHEL 10
 
 

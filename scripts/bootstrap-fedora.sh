@@ -53,17 +53,4 @@ if ! command -v mise >/dev/null 2>&1; then
   curl -fsSL https://mise.jdx.dev/install.sh | sh
 fi
 
-echo "INFO: Stowing dotfiles..."
-if command -v stow >/dev/null 2>&1; then
-  make -C "$REPO_ROOT" install
-else
-  echo "WARN: stow not found; skipping dotfile install."
-fi
-
-echo "INFO: Installing zsh/tmux plugins..."
-bash "$REPO_ROOT/scripts/install-plugins.sh"
-
 echo "SUCCESS: Fedora bootstrap complete."
-echo "Next steps:"
-echo "1. Start a new zsh session to load config"
-echo "2. In tmux, press prefix + I to install tmux plugins"
