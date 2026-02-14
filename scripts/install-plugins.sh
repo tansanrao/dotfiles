@@ -9,32 +9,32 @@ echo "INFO: Installing shell and tmux plugins..."
 mkdir -p ~/.config/zsh
 mkdir -p ~/.config/tmux/plugins
 
-# Install pure prompt for zsh
-if [[ ! -d ~/.config/zsh/pure ]]; then
-  echo "INFO: Installing pure prompt..."
-  git clone --quiet https://github.com/sindresorhus/pure.git ~/.config/zsh/pure
-else
-  echo "INFO: Updating pure prompt..."
-  git -C ~/.config/zsh/pure pull --quiet
-fi
+ensure_git_dependency() {
+  local name="$1"
+  local repo_url="$2"
+  local target_dir="$3"
 
-# Install zsh-syntax-highlighting
-if [[ ! -d ~/.config/zsh/zsh-syntax-highlighting ]]; then
-  echo "INFO: Installing zsh-syntax-highlighting..."
-  git clone --quiet https://github.com/zsh-users/zsh-syntax-highlighting.git ~/.config/zsh/zsh-syntax-highlighting
-else
-  echo "INFO: Updating zsh-syntax-highlighting..."
-  git -C ~/.config/zsh/zsh-syntax-highlighting pull --quiet
-fi
+  mkdir -p "$(dirname "$target_dir")"
 
-# Install TPM (Tmux Plugin Manager)
-if [[ ! -d ~/.config/tmux/plugins/tpm ]]; then
-  echo "INFO: Installing TPM (Tmux Plugin Manager)..."
-  git clone --quiet https://github.com/tmux-plugins/tpm ~/.config/tmux/plugins/tpm
-else
-  echo "INFO: Updating TPM..."
-  git -C ~/.config/tmux/plugins/tpm pull --quiet
-fi
+  if [[ ! -d "$target_dir/.git" ]]; then
+    if [[ -d "$target_dir" ]]; then
+      echo "WARN: $name target exists but is not a git repo: $target_dir"
+      echo "WARN: Remove it manually, then rerun install."
+      return
+    fi
+    echo "INFO: Installing $name..."
+    git clone --quiet "$repo_url" "$target_dir"
+    return
+  fi
+
+  echo "INFO: Updating $name..."
+  git -C "$target_dir" pull --ff-only --quiet
+}
+
+# Manually managed git dependencies (clone or update on each run)
+ensure_git_dependency "pure prompt" "https://github.com/sindresorhus/pure.git" "$HOME/.config/zsh/pure"
+ensure_git_dependency "zsh-syntax-highlighting" "https://github.com/zsh-users/zsh-syntax-highlighting.git" "$HOME/.config/zsh/zsh-syntax-highlighting"
+ensure_git_dependency "TPM (Tmux Plugin Manager)" "https://github.com/tmux-plugins/tpm.git" "$HOME/.config/tmux/plugins/tpm"
 
 echo "SUCCESS: Plugins installed!"
 echo ""

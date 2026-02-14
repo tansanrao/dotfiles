@@ -1,5 +1,11 @@
 # Theme config
-theme = Gruvbox Dark Hard
+theme = Ayu
+font-family = "SF Mono"
+font-style = "Medium"
+font-size = 12
+
+# General stuff
+quit-after-last-window-closed = true
 
 # Enable shell integration
 shell-integration = detect
