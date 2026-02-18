@@ -1,8 +1,9 @@
 # Theme config
 theme = Ayu
 font-family = "SF Mono"
-font-style = "Medium"
 font-size = 12
+font-thicken = true
+window-colorspace = display-p3 
 
 # General stuff
 quit-after-last-window-closed = true
