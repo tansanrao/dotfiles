@@ -4,9 +4,14 @@ font-family = "SF Mono"
 font-size = 12
 font-thicken = true
 window-colorspace = display-p3 
+term = xterm-ghostty
 
 # General stuff
 quit-after-last-window-closed = true
+scrollback-limit = 50000000
+clipboard-read = ask
+clipboard-write = allow
+keybind = shift+enter=text:\n
 
 # Enable shell integration
 shell-integration = detect
