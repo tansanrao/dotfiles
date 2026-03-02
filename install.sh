@@ -56,7 +56,7 @@ stow_all() {
     [[ -d "$pkg" ]] || continue
     pkg_name="$(basename "$pkg")"
     echo "==> Stowing $pkg_name into $TARGET_DIR"
-    stow --verbose=2 --dir="$STOW_DIR" --target="$TARGET_DIR" "$pkg_name"
+    stow --restow --verbose=2 --dir="$STOW_DIR" --target="$TARGET_DIR" "$pkg_name"
   done
 }
 

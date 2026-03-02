@@ -13,6 +13,11 @@ chmod +x install.sh scripts/bootstrap-*.sh
 - macOS (Homebrew + Brewfile)
 - Fedora
 
+## Toolchain Management
+- Rust is managed with `rustup` on all supported platforms. Bootstrap removes OS package-manager Rust installs (`dnf rust/cargo` on Fedora, `brew rust` on macOS) and ensures `stable` is installed and set as default.
+- Node.js is managed with `fnm`. Bootstrap installs or updates `fnm`, then installs the latest available Node `24.x` and sets it as the default.
+- `./install.sh` is rerunnable by design: first run sets everything up, later runs update existing tools and refresh symlinks.
+
 ## Terminal Agent Pipeline (Ghostty + tmux + Neovim)
 - `Shift+Enter` soft newline is enforced in Ghostty with `keybind = shift+enter=text:\n`.
 - tmux is standardized on `tmux-256color` with explicit terminal features for RGB/clipboard/focus/title.

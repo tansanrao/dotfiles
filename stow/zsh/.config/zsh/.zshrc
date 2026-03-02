@@ -124,20 +124,19 @@ if is_macos; then
   fi
 fi
 
-# fnm homebrew
-FNM_PATH="/opt/homebrew/opt/fnm/bin"
-if [ -d "$FNM_PATH" ]; then
-  export PATH="$FNM_PATH:$PATH"
-fi
-if command -v fnm >/dev/null 2>&1; then
-  eval "$(fnm env --version-file-strategy=recursive --corepack-enabled --use-on-cd --shell zsh)"
-fi
+# ---------- fnm ----------
+for fnm_path in \
+  "$HOME/.local/share/fnm" \
+  "$HOME/.fnm" \
+  "/opt/homebrew/opt/fnm/bin" \
+  "/usr/local/opt/fnm/bin"
+do
+  if [[ -d "$fnm_path" ]]; then
+    export PATH="$fnm_path:$PATH"
+    break
+  fi
+done
 
-# fnm ubuntu
-FNM_PATH="/home/tansanrao/.local/share/fnm"
-if [ -d "$FNM_PATH" ]; then
-  export PATH="$FNM_PATH:$PATH"
-fi
 if command -v fnm >/dev/null 2>&1; then
   eval "$(fnm env --version-file-strategy=recursive --corepack-enabled --use-on-cd --shell zsh)"
 fi
