@@ -80,6 +80,13 @@ fi
 rustup toolchain install stable
 rustup default stable
 
+echo "INFO: Installing eza with cargo..."
+if ! command -v cargo >/dev/null 2>&1; then
+  echo "ERROR: cargo is not available for eza installation." >&2
+  exit 1
+fi
+cargo install eza --locked --force
+
 echo "INFO: Installing fnm (Fast Node Manager)..."
 FNM_INSTALL_DIR="$HOME/.local/share/fnm"
 curl -fsSL https://fnm.vercel.app/install \

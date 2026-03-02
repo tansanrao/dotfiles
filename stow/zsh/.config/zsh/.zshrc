@@ -140,3 +140,8 @@ done
 if command -v fnm >/dev/null 2>&1; then
   eval "$(fnm env --version-file-strategy=recursive --corepack-enabled --use-on-cd --shell zsh)"
 fi
+
+# ---------- ls replacement ----------
+if command -v eza >/dev/null 2>&1; then
+  alias ls='eza'
+fi

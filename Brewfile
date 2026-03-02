@@ -21,6 +21,7 @@ brew "zoxide"
 brew "jq"
 brew "yq"
 brew "tree"
+brew "eza"
 
 # Casks - GUI Applications
 cask "discord"
