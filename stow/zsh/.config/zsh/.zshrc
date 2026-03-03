@@ -29,6 +29,8 @@ function jump() {
 HISTFILE="$XDG_STATE_HOME/zsh/history"
 HISTSIZE=500000
 SAVEHIST=500000
+# Ensure history path exists so zsh can lock/read/write history.
+mkdir -p "${HISTFILE:h}"
 setopt INC_APPEND_HISTORY
 setopt SHARE_HISTORY
 setopt EXTENDED_HISTORY
