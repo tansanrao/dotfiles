@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Root-first dotfiles installer with guarded fallbacks.
+# Root-first dotfiles installer with deterministic Linux bootstraps.
 
 set -euo pipefail
 
@@ -9,7 +9,8 @@ TARGET_DIR="$HOME"
 
 NO_ROOT=false
 SKIP_PLUGINS=false
-ALLOW_LINK_FALLBACK=false
+NO_STOW=false
+USED_ALLOW_LINK_FALLBACK_ALIAS=false
 DRY_RUN=false
 ONLY_COMPONENTS=""
 
@@ -40,9 +41,10 @@ Default behavior:
 
 Options:
   --no-root              Use user-space bootstrap fallback (Linux)
+  --no-stow              Use built-in symlink linker when GNU stow is unavailable
   --only a,b,c           Limit component install to a CSV subset
   --skip-plugins         Skip plugin dependency install/update
-  --allow-link-fallback  Use built-in symlink linker when GNU stow is unavailable
+  --allow-link-fallback  Deprecated alias for --no-stow
   --dry-run              Print planned actions without changing files
   -h, --help             Show this help message
 
@@ -118,8 +120,12 @@ parse_args() {
       --skip-plugins)
         SKIP_PLUGINS=true
         ;;
+      --no-stow)
+        NO_STOW=true
+        ;;
       --allow-link-fallback)
-        ALLOW_LINK_FALLBACK=true
+        NO_STOW=true
+        USED_ALLOW_LINK_FALLBACK_ALIAS=true
         ;;
       --dry-run)
         DRY_RUN=true
@@ -151,6 +157,28 @@ parse_args() {
     esac
     shift
   done
+
+  if [[ "$USED_ALLOW_LINK_FALLBACK_ALIAS" == "true" ]]; then
+    warn "--allow-link-fallback is deprecated; use --no-stow."
+  fi
+}
+
+is_el10_host() {
+  if [[ "$(uname -s)" != "Linux" || ! -f /etc/os-release ]]; then
+    return 1
+  fi
+
+  # shellcheck disable=SC1091
+  . /etc/os-release
+
+  case "${ID:-}" in
+    rocky|centos)
+      [[ "${VERSION_ID%%.*}" == "10" ]]
+      ;;
+    *)
+      return 1
+      ;;
+  esac
 }
 
 resolve_linux_bootstrap_script() {
@@ -327,8 +355,14 @@ apply_links() {
     return
   fi
 
-  if [[ "$ALLOW_LINK_FALLBACK" != "true" ]]; then
-    err "GNU stow is not installed. Re-run with --allow-link-fallback to use the built-in symlink linker."
+  local use_no_stow="$NO_STOW"
+  if [[ "$use_no_stow" != "true" ]] && is_el10_host; then
+    use_no_stow=true
+    info "EL10 detected; using --no-stow linker mode by default."
+  fi
+
+  if [[ "$use_no_stow" != "true" ]]; then
+    err "GNU stow is not installed. Re-run with --no-stow to use the built-in symlink linker."
     exit 1
   fi
 

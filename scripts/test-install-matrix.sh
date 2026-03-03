@@ -150,6 +150,8 @@ need_cmd() {
 for cmd in zsh tmux git fzf zoxide eza node npm cargo nvim; do
   need_cmd "$cmd"
 done
+node_version="$(node -v)"
+[[ "$node_version" == v24.* ]] || { echo "Node is not v24.x: $node_version" >&2; exit 1; }
 if ! command -v fd >/dev/null 2>&1 && ! command -v fdfind >/dev/null 2>&1; then
   echo "missing fd/fdfind" >&2
   exit 1
@@ -178,16 +180,28 @@ set +e
 su - tester -c "cd /repo && ./install.sh --no-root --skip-plugins" >/tmp/stow_guard.log 2>&1
 status_stow=$?
 set -e
-[[ $status_stow -ne 0 ]] || { echo "expected failure without --allow-link-fallback" >&2; exit 1; }
-grep -q -- "--allow-link-fallback" /tmp/stow_guard.log || { cat /tmp/stow_guard.log >&2; echo "missing stow fallback guidance" >&2; exit 1; }
+major=""
+if [[ "$TEST_FAMILY" == "el" && -f /etc/os-release ]]; then
+  . /etc/os-release
+  major="${VERSION_ID%%.*}"
+fi
+if [[ "$TEST_FAMILY" == "el" && "$major" == "10" ]]; then
+  [[ $status_stow -eq 0 ]] || { cat /tmp/stow_guard.log >&2; echo "expected EL10 success without --no-stow" >&2; exit 1; }
+else
+  [[ $status_stow -ne 0 ]] || { echo "expected failure without --no-stow" >&2; exit 1; }
+  grep -q -- "--no-stow" /tmp/stow_guard.log || { cat /tmp/stow_guard.log >&2; echo "missing no-stow guidance" >&2; exit 1; }
+fi
 '
 
 NOROOT_CASE_SCRIPT='set -euo pipefail
 /repo/tests/container/prepare.sh "$TEST_FAMILY"
 command -v su >/dev/null 2>&1 || { echo "su is required for no-root tests" >&2; exit 1; }
 useradd -m -s /bin/bash tester >/dev/null 2>&1 || true
-su - tester -c "cd /repo && ./install.sh --no-root --allow-link-fallback --skip-plugins"
+su - tester -c "cd /repo && ./install.sh --no-root --no-stow --skip-plugins"
 su - tester -c "export PATH=\"\$HOME/.local/bin:\$HOME/.cargo/bin:\${XDG_DATA_HOME:-\$HOME/.local/share}/fnm:\$PATH\"; command -v nvim >/dev/null"
+su - tester -c "export PATH=\"\$HOME/.local/bin:\$HOME/.cargo/bin:\${XDG_DATA_HOME:-\$HOME/.local/share}/fnm:\$PATH\"; node -v" >/tmp/node_version.txt
+node_version="$(cat /tmp/node_version.txt)"
+[[ "$node_version" == v24.* ]] || { echo "Node is not v24.x in no-root mode: $node_version" >&2; exit 1; }
 su - tester -c "export PATH=\"\$HOME/.local/bin:\$HOME/.cargo/bin:\${XDG_DATA_HOME:-\$HOME/.local/share}/fnm:\$PATH\"; nvim --version | head -n1" >/tmp/nvim_version.txt
 nvim_version="$(awk "{print \$2}" /tmp/nvim_version.txt)"
 nvim_version="${nvim_version#v}"

@@ -14,18 +14,18 @@ case "$family" in
   fedora)
     dnf -y makecache --refresh
     dnf -y install \
-      bash coreutils findutils git curl wget tar gzip xz ca-certificates shadow-utils util-linux which
+      bash coreutils findutils git curl wget unzip tar gzip xz ca-certificates shadow-utils util-linux which
     ;;
   el)
     dnf -y makecache --refresh
     dnf -y install \
-      bash findutils git wget tar gzip xz ca-certificates shadow-utils util-linux which
+      bash findutils git wget unzip tar gzip xz ca-certificates shadow-utils util-linux which
     ;;
   ubuntu)
     export DEBIAN_FRONTEND=noninteractive
     apt-get update
     apt-get -y install \
-      bash coreutils findutils git curl wget tar gzip xz-utils ca-certificates passwd util-linux
+      bash coreutils findutils git curl wget unzip tar gzip xz-utils ca-certificates passwd util-linux
     ;;
   *)
     echo "Unknown container family: $family" >&2

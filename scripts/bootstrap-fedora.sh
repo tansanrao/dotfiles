@@ -43,74 +43,81 @@ if [[ "${ID:-}" != "fedora" ]]; then
   fatal "This script targets Fedora (ID=fedora)."
 fi
 
+if [[ "${VERSION_ID:-}" != 43* ]]; then
+  fatal "bootstrap-fedora.sh targets Fedora 43.x only (detected: ${VERSION_ID:-unknown})"
+fi
+
 bootstrap_init "$NO_ROOT" "$DRY_RUN"
 
 if [[ "$NO_ROOT" != "true" ]]; then
   info "Refreshing Fedora package metadata..."
   run_root_cmd dnf -y makecache --refresh
 
-  dnf_install_if_available \
-    curl wget unzip git stow tmux zsh ripgrep fd-find fzf bat htop jq yq tree zoxide eza \
+  info "Installing Fedora package set..."
+  run_root_cmd dnf -y install \
+    curl unzip git stow tmux zsh ripgrep fd-find fzf bat htop jq yq tree zoxide \
     gcc make pkgconf-pkg-config
 else
-  warn "Skipping dnf package installation in --no-root mode"
+  info "Skipping root package installation in --no-root mode"
 fi
 
 ensure_rustup_toolchain
-if ! ensure_node_lts; then
-  warn "Node/npm setup skipped because fnm is unavailable."
-fi
+ensure_node24_latest
 
-if ! has_cmd fd && ! has_cmd fdfind; then
-  if ! ensure_cargo_crate "fd-find" "fd"; then
-    warn "Could not install fd via cargo"
+if [[ "$NO_ROOT" != "true" ]]; then
+  if ! has_cmd fd && ! has_cmd fdfind; then
+    if ! ensure_cargo_crate "fd-find" "fd"; then
+      fatal "Failed to install fd via cargo"
+    fi
   fi
-fi
 
-if ! has_cmd zoxide; then
-  if [[ "$NO_ROOT" != "true" ]] && dnf_has_package zoxide; then
-    dnf_install_if_available zoxide
-  fi
   if ! has_cmd zoxide; then
     if ! ensure_cargo_crate "zoxide" "zoxide"; then
-      warn "Could not install zoxide via cargo"
+      fatal "Failed to install zoxide via cargo"
     fi
   fi
-fi
 
-if ! has_cmd eza; then
-  if [[ "$NO_ROOT" != "true" ]] && dnf_has_package eza; then
-    dnf_install_if_available eza
-  fi
   if ! has_cmd eza; then
     if ! ensure_cargo_crate "eza" "eza"; then
-      warn "Could not install eza via cargo"
+      fatal "Failed to install eza via cargo"
     fi
   fi
-fi
 
-if ! has_cmd fzf; then
-  if [[ "$NO_ROOT" != "true" ]] && dnf_has_package fzf; then
-    dnf_install_if_available fzf
-  fi
   if ! has_cmd fzf; then
-    ensure_fzf_user_binary
+    if ! ensure_fzf_user_binary; then
+      fatal "Failed to install fzf user binary"
+    fi
   fi
-fi
-
-if [[ "$NO_ROOT" == "true" ]]; then
-  if ! has_cmd zsh; then
-    warn "zsh is not installed and cannot be auto-installed in --no-root mode"
-  fi
-  if ! has_cmd tmux; then
-    warn "tmux is not installed and cannot be auto-installed in --no-root mode"
-  fi
+else
+  info "Skipping cargo/direct tool installs in --no-root mode"
 fi
 
 if [[ "$NO_ROOT" == "true" ]]; then
   install_or_upgrade_neovim_linux user
 else
   install_or_upgrade_neovim_linux root
+fi
+
+missing=()
+for cmd in cargo node npm nvim; do
+  if ! has_cmd "$cmd"; then
+    missing+=("$cmd")
+  fi
+done
+
+if [[ "$NO_ROOT" != "true" ]]; then
+  for cmd in git zsh tmux eza zoxide fzf; do
+    if ! has_cmd "$cmd"; then
+      missing+=("$cmd")
+    fi
+  done
+  if ! has_cmd fd && ! has_cmd fdfind; then
+    missing+=("fd/fdfind")
+  fi
+fi
+
+if (( ${#missing[@]} > 0 )); then
+  fatal "Fedora bootstrap incomplete; missing required command(s): ${missing[*]}"
 fi
 
 info "Fedora bootstrap complete."

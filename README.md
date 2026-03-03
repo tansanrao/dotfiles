@@ -1,5 +1,5 @@
 # Dotfiles
-Root-first, multi-OS dotfiles with guarded no-root and no-stow fallbacks.
+Root-first, deterministic dotfiles bootstrap for a known-good OS matrix.
 
 ## Quick Start
 ```bash
@@ -11,13 +11,13 @@ chmod +x install.sh scripts/*.sh tests/container/*.sh
 
 ## Supported Hosts
 - macOS (Homebrew + Brewfile)
-- Fedora
+- Fedora 43
 - Rocky Linux 9 / 10
 - CentOS Stream 9 / 10
 - Ubuntu 24.04 LTS
 
 ## Installer Behavior
-`./install.sh` now bootstraps by default.
+`./install.sh` bootstraps by default.
 
 - Linux default mode is root-first:
 - If root: run privileged bootstrap directly.
@@ -25,28 +25,35 @@ chmod +x install.sh scripts/*.sh tests/container/*.sh
 - If sudo is unavailable (or unusable in non-interactive mode): fail with guidance to rerun with `--no-root`.
 - macOS runs bootstrap + Brewfile by default.
 
-### Flags
-- `--no-root`: enable user-space bootstrap fallback on Linux (best-effort installs; unavailable tools are skipped with warnings).
+### Fallback Modes
+Only two Linux fallback modes are supported:
+- `--no-root`: user-space bootstrap path (no package-manager installs as root).
+- `--no-stow`: use built-in symlink linker when GNU stow is unavailable.
+
+Compatibility:
+- `--allow-link-fallback` is kept as a deprecated alias for `--no-stow`.
+- EL10 hosts auto-enable no-stow linker mode when `stow` is unavailable.
+
+### Other Flags
 - `--only a,b,c`: restrict dotfile components (`git,zsh,tmux,neovim,ghostty`).
 - `--skip-plugins`: skip zsh/tmux plugin clone/update.
-- `--allow-link-fallback`: allow symlink linker when `stow` is missing.
 - `--dry-run`: print actions without mutating files.
 
-## Neovim Strategy
-- Linux uses a pinned upstream Neovim release (`v0.11.6`) via official tarball install.
-- LazyVim minimum is enforced (`>= 0.11.2`).
-- This avoids stale distro Neovim on EL/Ubuntu channels.
+## Toolchain Strategy
+- Node.js is standardized via `fnm` to latest `v24.x` on each run.
+- Rust is standardized via `rustup` stable.
+- Linux Neovim is installed from upstream release tarballs (`v0.11.6` target), enforcing LazyVim minimum `>= 0.11.2`.
 
-## Root vs No-Root Examples
+## Example Runs
 ```bash
 # default root-first behavior
 ./install.sh
 
-# explicit user-space fallback
-./install.sh --no-root --allow-link-fallback
+# explicit user-space + no-stow fallback
+./install.sh --no-root --no-stow
 
 # focused server setup
-./install.sh --no-root --allow-link-fallback --only zsh,tmux,neovim
+./install.sh --no-root --no-stow --only zsh,tmux,neovim
 ```
 
 ## Plugin Paths
@@ -55,28 +62,19 @@ Plugins are cloned into user data locations:
 - TPM: `${XDG_DATA_HOME:-$HOME/.local/share}/tmux/plugins/tpm`
 
 ## Container Test Matrix
-Run Linux matrix tests (full install assertions):
+Run Linux matrix tests:
 ```bash
 ./scripts/test-install-matrix.sh --suite all
 ```
 
 Subset examples:
 ```bash
-./scripts/test-install-matrix.sh --suite root --images fedora,rocky9,ubuntu2404
-./scripts/test-install-matrix.sh --suite guards --images rocky9,ubuntu2404
-./scripts/test-install-matrix.sh --suite noroot --images cs9,cs10
+./scripts/test-install-matrix.sh --suite root --images fedora,rocky9,rocky10,cs9,cs10,ubuntu2404
+./scripts/test-install-matrix.sh --suite guards --images fedora,rocky9,rocky10,cs9,cs10,ubuntu2404
+./scripts/test-install-matrix.sh --suite noroot --images fedora,rocky9,rocky10,cs9,cs10,ubuntu2404
 ```
 
 Optional report:
 ```bash
 ./scripts/test-install-matrix.sh --suite all --json-report tests/artifacts/report.json
-```
-
-## Legacy Local Cleanup
-If you previously had plugin clones in `stow/`, remove legacy local copies:
-```bash
-rm -rf \
-  ~/.dotfiles/stow/zsh/.config/zsh/pure \
-  ~/.dotfiles/stow/zsh/.config/zsh/zsh-syntax-highlighting \
-  ~/.dotfiles/stow/tmux/.config/tmux/plugins
 ```

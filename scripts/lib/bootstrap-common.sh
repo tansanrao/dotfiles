@@ -220,6 +220,7 @@ ensure_rustup_toolchain() {
   if ! rustup self update; then
     warn "rustup self update failed; continuing"
   fi
+
   rustup toolchain install stable
   rustup default stable
 }
@@ -230,17 +231,10 @@ ensure_fnm() {
   if ! has_cmd fnm; then
     info "Installing fnm..."
     if has_cmd curl; then
-      if ! run_shell "curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell --install-dir '$fnm_dir' --force-install"; then
-        warn "fnm installation failed"
-        return 1
-      fi
+      run_shell "curl -fsSL https://fnm.vercel.app/install | bash -s -- --skip-shell --install-dir '$fnm_dir' --force-install"
     elif has_cmd wget; then
-      if ! run_shell "wget -qO- https://fnm.vercel.app/install | bash -s -- --skip-shell --install-dir '$fnm_dir' --force-install"; then
-        warn "fnm installation failed"
-        return 1
-      fi
+      run_shell "wget -qO- https://fnm.vercel.app/install | bash -s -- --skip-shell --install-dir '$fnm_dir' --force-install"
     else
-      warn "fnm install requires curl or wget; skipping Node setup"
       return 1
     fi
   fi
@@ -248,27 +242,20 @@ ensure_fnm() {
   export PATH="$fnm_dir:$PATH"
 
   if ! has_cmd fnm; then
-    warn "fnm is unavailable after installation attempt"
     return 1
   fi
 
   return 0
 }
 
-resolve_latest_lts_node() {
+resolve_latest_node24() {
   local version
   version="$(fetch_url_stdout "https://nodejs.org/dist/index.json" | awk -F'"' '
     /"version":/ {v=$4}
     /"lts":/ {
-      if ($4 != "false") {
-        if (first == "") {
-          first = v
-        }
-      }
-    }
-    END {
-      if (first != "") {
-        print first
+      if ($4 != "false" && v ~ /^v24\./) {
+        print v
+        exit
       }
     }
   ')"
@@ -280,51 +267,45 @@ resolve_latest_lts_node() {
   printf '%s\n' "$version"
 }
 
-ensure_node_lts() {
-  if ! ensure_fnm; then
-    warn "Skipping Node.js LTS setup because fnm is unavailable"
-    return 1
-  fi
-
-  if [[ "$BOOTSTRAP_DRY_RUN" == "true" ]]; then
-    info "[dry-run] fnm install <latest-lts>"
-    info "[dry-run] fnm default <latest-lts>"
-    info "[dry-run] expose node/npm/npx/corepack under \$HOME/.local/bin"
-    return
-  fi
-
-  local node_lts
-  if ! node_lts="$(resolve_latest_lts_node)"; then
-    warn "Could not resolve latest Node LTS version"
-    return 1
-  fi
-  info "Installing Node.js LTS: $node_lts"
-  if ! fnm install "$node_lts"; then
-    warn "fnm failed to install Node.js $node_lts"
-    return 1
-  fi
-  if ! fnm default "$node_lts"; then
-    warn "fnm failed to set default Node.js $node_lts"
-    return 1
-  fi
-
-  # Load fnm's environment in the current shell so node/npm resolve immediately.
-  if ! eval "$(fnm env --shell bash)"; then
-    warn "Could not activate fnm environment in current shell"
-    return 1
-  fi
-
+expose_node_binaries() {
   local local_bin="$HOME/.local/bin"
-  mkdir -p "$local_bin"
   local binary target
+
+  mkdir -p "$local_bin"
   for binary in node npm npx corepack; do
     if has_cmd "$binary"; then
       target="$(command -v "$binary")"
       ln -sfn "$target" "$local_bin/$binary"
     fi
   done
+}
 
-  return 0
+ensure_node24_latest() {
+  if ! ensure_fnm; then
+    fatal "fnm is unavailable after installation attempt"
+  fi
+
+  if [[ "$BOOTSTRAP_DRY_RUN" == "true" ]]; then
+    info "[dry-run] fnm install <latest-v24.x>"
+    info "[dry-run] fnm default <latest-v24.x>"
+    info "[dry-run] expose node/npm/npx/corepack under \$HOME/.local/bin"
+    return
+  fi
+
+  local node24
+  if ! node24="$(resolve_latest_node24)"; then
+    fatal "Could not resolve latest Node 24 release"
+  fi
+
+  info "Installing Node.js 24: $node24"
+  fnm install "$node24"
+  fnm default "$node24"
+
+  if ! eval "$(fnm env --shell bash)"; then
+    fatal "Could not activate fnm environment in current shell"
+  fi
+
+  expose_node_binaries
 }
 
 ensure_cargo_crate() {
@@ -356,61 +337,9 @@ ensure_cargo_crate() {
   return 0
 }
 
-dnf_has_package() {
-  local pkg="$1"
-  dnf -q list --available "$pkg" >/dev/null 2>&1 || dnf -q list --installed "$pkg" >/dev/null 2>&1
-}
-
-dnf_install_if_available() {
-  local pkgs=("$@")
-  local installable=()
-  local pkg
-
-  for pkg in "${pkgs[@]}"; do
-    if dnf_has_package "$pkg"; then
-      installable+=("$pkg")
-    else
-      warn "Package not available in enabled repos: $pkg"
-    fi
-  done
-
-  if (( ${#installable[@]} == 0 )); then
-    warn "No installable dnf packages in request"
-    return
-  fi
-
-  run_root_cmd dnf -y install "${installable[@]}"
-}
-
-apt_has_package() {
-  local pkg="$1"
-  apt-cache show "$pkg" >/dev/null 2>&1
-}
-
-apt_install_if_available() {
-  local pkgs=("$@")
-  local installable=()
-  local pkg
-
-  for pkg in "${pkgs[@]}"; do
-    if apt_has_package "$pkg"; then
-      installable+=("$pkg")
-    else
-      warn "Package not available in apt repos: $pkg"
-    fi
-  done
-
-  if (( ${#installable[@]} == 0 )); then
-    warn "No installable apt packages in request"
-    return
-  fi
-
-  run_root_cmd env DEBIAN_FRONTEND=noninteractive apt-get -y install "${installable[@]}"
-}
-
 ensure_fzf_user_binary() {
   if has_cmd fzf; then
-    return
+    return 0
   fi
 
   local arch
@@ -419,14 +348,14 @@ ensure_fzf_user_binary() {
     aarch64|arm64) arch="arm64" ;;
     *)
       warn "Unsupported architecture for fzf user binary install: $(uname -m)"
-      return
+      return 1
       ;;
   esac
 
   local tag asset tmpdir
   if [[ "$BOOTSTRAP_DRY_RUN" == "true" ]]; then
     info "[dry-run] install fzf user binary for arch: $arch"
-    return
+    return 0
   fi
 
   tag="$(fetch_url_stdout "https://api.github.com/repos/junegunn/fzf/releases/latest" | awk -F'"' '
@@ -441,9 +370,10 @@ ensure_fzf_user_binary() {
       }
     }
   ')"
+
   if [[ -z "$tag" ]]; then
     warn "Could not resolve latest fzf release tag"
-    return
+    return 1
   fi
 
   asset="fzf-${tag#v}-linux_${arch}.tar.gz"
@@ -455,81 +385,10 @@ ensure_fzf_user_binary() {
   if ! tar -xzf "$tmpdir/$asset" -C "$HOME/.local/bin" fzf; then
     rm -rf "$tmpdir"
     warn "Failed to extract fzf user binary"
-    return
+    return 1
   fi
 
   rm -rf "$tmpdir"
   info "Installed fzf user binary to $HOME/.local/bin/fzf"
-}
-
-stow_build_jobs() {
-  if has_cmd nproc; then
-    nproc
-    return
-  fi
-
-  if has_cmd getconf; then
-    getconf _NPROCESSORS_ONLN 2>/dev/null || true
-    return
-  fi
-
-  printf '1\n'
-}
-
-ensure_gnu_stow() {
-  if has_cmd stow; then
-    info "GNU stow already installed"
-    return 0
-  fi
-
-  if [[ "$BOOTSTRAP_NO_ROOT" == "true" ]]; then
-    warn "GNU stow is unavailable in --no-root mode"
-    return 1
-  fi
-
-  local version archive url
-  version="${STOW_TARGET_VERSION:-2.4.1}"
-  archive="stow-${version}.tar.gz"
-  url="https://ftp.gnu.org/gnu/stow/${archive}"
-
-  if [[ "$BOOTSTRAP_DRY_RUN" == "true" ]]; then
-    info "[dry-run] install GNU stow $version from source ($url)"
-    return 0
-  fi
-
-  info "Installing GNU stow $version from source..."
-
-  local tmpdir source_dir jobs
-  tmpdir="$(mktemp -d)"
-  source_dir="$tmpdir/stow-$version"
-  jobs="$(stow_build_jobs)"
-  if [[ -z "$jobs" ]]; then
-    jobs="1"
-  fi
-
-  download_file "$url" "$tmpdir/$archive"
-  tar -xzf "$tmpdir/$archive" -C "$tmpdir"
-
-  if [[ ! -d "$source_dir" ]]; then
-    rm -rf "$tmpdir"
-    warn "Extracted source directory not found: $source_dir"
-    return 1
-  fi
-
-  if ! run_root_shell "set -euo pipefail; cd '$source_dir'; ./configure --prefix=/usr/local; make -j$jobs; make install"; then
-    rm -rf "$tmpdir"
-    warn "Failed to build/install GNU stow from source"
-    return 1
-  fi
-
-  rm -rf "$tmpdir"
-
-  export PATH="/usr/local/bin:$PATH"
-  if has_cmd stow; then
-    info "GNU stow installed successfully"
-    return 0
-  fi
-
-  warn "GNU stow remains unavailable after source install"
-  return 1
+  return 0
 }
