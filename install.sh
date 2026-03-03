@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Portable-first dotfiles installer.
+# Root-first dotfiles installer with guarded fallbacks.
 
 set -euo pipefail
 
@@ -7,7 +7,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STOW_DIR="$REPO_ROOT/stow"
 TARGET_DIR="$HOME"
 
-BOOTSTRAP=false
+NO_ROOT=false
 SKIP_PLUGINS=false
 ALLOW_LINK_FALLBACK=false
 DRY_RUN=false
@@ -30,24 +30,25 @@ err() {
 }
 
 usage() {
-  cat <<'EOF'
+  cat <<'USAGE'
 Usage: ./install.sh [options]
 
-Portable-first behavior (default):
-  - configures only components whose tools are already installed
-  - does not run OS bootstrap/package install steps unless --bootstrap is set
+Default behavior:
+  - Detect host OS and run the matching bootstrap script
+  - Linux bootstrap is root-first by default (root or sudo)
+  - Apply dotfile links for detected installed components
 
 Options:
-  --bootstrap             Run OS bootstrap scripts and Brewfile (explicit opt-in)
-  --only a,b,c            Limit component install to a CSV subset
-  --skip-plugins          Skip plugin dependency install/update
-  --allow-link-fallback   Use built-in symlink linker when GNU stow is unavailable
-  --dry-run               Print planned actions without changing files
-  -h, --help              Show this help message
+  --no-root              Use user-space bootstrap fallback (Linux)
+  --only a,b,c           Limit component install to a CSV subset
+  --skip-plugins         Skip plugin dependency install/update
+  --allow-link-fallback  Use built-in symlink linker when GNU stow is unavailable
+  --dry-run              Print planned actions without changing files
+  -h, --help             Show this help message
 
 Components:
   git, zsh, tmux, neovim, ghostty
-EOF
+USAGE
 }
 
 component_command() {
@@ -89,14 +90,17 @@ join_by_comma() {
   printf '%s' "$*"
 }
 
+refresh_user_tool_path() {
+  local fnm_dir="${XDG_DATA_HOME:-$HOME/.local/share}/fnm"
+  export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$fnm_dir:$PATH"
+}
+
 stow_ignore_regex_for_component() {
   case "$1" in
     zsh)
-      # Ignore legacy local/plugin artifacts that may exist in a developer checkout.
       echo '(^|/)\.config/zsh/(pure|zsh-syntax-highlighting|\.zcompdump|\.zsh_history)(/|$)'
       ;;
     tmux)
-      # Ignore legacy TPM location under the stow package.
       echo '(^|/)\.config/tmux/plugins(/|$)'
       ;;
     *)
@@ -108,8 +112,8 @@ stow_ignore_regex_for_component() {
 parse_args() {
   while (( "$#" > 0 )); do
     case "$1" in
-      --bootstrap)
-        BOOTSTRAP=true
+      --no-root)
+        NO_ROOT=true
         ;;
       --skip-plugins)
         SKIP_PLUGINS=true
@@ -131,6 +135,10 @@ parse_args() {
       --only=*)
         ONLY_COMPONENTS="${1#*=}"
         ;;
+      --bootstrap)
+        err "--bootstrap has been removed. Bootstrap is now default behavior."
+        exit 1
+        ;;
       -h|--help)
         usage
         exit 0
@@ -143,6 +151,90 @@ parse_args() {
     esac
     shift
   done
+}
+
+resolve_linux_bootstrap_script() {
+  if [[ ! -f /etc/os-release ]]; then
+    err "Missing /etc/os-release; cannot determine Linux distribution"
+    exit 1
+  fi
+
+  # shellcheck disable=SC1091
+  . /etc/os-release
+
+  case "${ID:-}" in
+    fedora)
+      echo "$REPO_ROOT/scripts/bootstrap-fedora.sh"
+      ;;
+    rocky|centos)
+      local major
+      major="${VERSION_ID%%.*}"
+      if [[ "$major" == "9" || "$major" == "10" ]]; then
+        echo "$REPO_ROOT/scripts/bootstrap-el.sh"
+      else
+        err "Unsupported ${ID:-unknown} version: ${VERSION_ID:-unknown}"
+        exit 1
+      fi
+      ;;
+    ubuntu)
+      if [[ "${VERSION_ID:-}" == 24.04* ]]; then
+        echo "$REPO_ROOT/scripts/bootstrap-ubuntu.sh"
+      else
+        err "Unsupported Ubuntu version: ${VERSION_ID:-unknown} (expected 24.04.x)"
+        exit 1
+      fi
+      ;;
+    *)
+      err "Unsupported Linux distro ID: ${ID:-unknown}"
+      exit 1
+      ;;
+  esac
+}
+
+run_bootstrap() {
+  local os script
+  os="$(uname -s)"
+
+  case "$os" in
+    Darwin)
+      script="$REPO_ROOT/scripts/bootstrap-mac.sh"
+      if [[ "$DRY_RUN" == "true" ]]; then
+        info "[dry-run] Would run macOS bootstrap: $script"
+      else
+        info "Bootstrapping macOS..."
+        zsh "$script"
+        if command -v brew >/dev/null 2>&1; then
+          info "Applying Brewfile..."
+          brew bundle --file="$REPO_ROOT/Brewfile"
+        else
+          warn "Homebrew not available; skipping Brewfile."
+        fi
+      fi
+      ;;
+    Linux)
+      script="$(resolve_linux_bootstrap_script)"
+
+      if [[ "$NO_ROOT" != "true" && "$EUID" -ne 0 ]] && ! command -v sudo >/dev/null 2>&1; then
+        err "No root or sudo privileges detected. Re-run with --no-root for user-space bootstrap."
+        exit 1
+      fi
+
+      local args=()
+      if [[ "$NO_ROOT" == "true" ]]; then
+        args+=("--no-root")
+      fi
+      if [[ "$DRY_RUN" == "true" ]]; then
+        args+=("--dry-run")
+      fi
+
+      info "Bootstrapping Linux via $(basename "$script")..."
+      bash "$script" "${args[@]}"
+      ;;
+    *)
+      err "Unsupported OS: $os"
+      exit 1
+      ;;
+  esac
 }
 
 detect_components() {
@@ -189,55 +281,6 @@ print_summary() {
       warn "Skipped: $item"
     done
   fi
-}
-
-run_bootstrap() {
-  local os
-  os="$(uname -s)"
-
-  if [[ "$BOOTSTRAP" != "true" ]]; then
-    info "Bootstrap disabled (portable configure-only mode)."
-    return
-  fi
-
-  if [[ "$DRY_RUN" == "true" ]]; then
-    info "[dry-run] Bootstrap requested for OS: $os"
-    return
-  fi
-
-  if [[ -f /etc/os-release ]]; then
-    # shellcheck disable=SC1091
-    . /etc/os-release
-  fi
-
-  case "$os" in
-    Darwin)
-      info "Bootstrapping macOS..."
-      zsh "$REPO_ROOT/scripts/bootstrap-mac.sh"
-      if command -v brew >/dev/null 2>&1; then
-        info "Applying Brewfile..."
-        brew bundle --file="$REPO_ROOT/Brewfile"
-      else
-        warn "Homebrew not available; skipping Brewfile."
-      fi
-      ;;
-    Linux)
-      case "${ID:-}" in
-        fedora)
-          info "Bootstrapping Fedora..."
-          bash "$REPO_ROOT/scripts/bootstrap-fedora.sh"
-          ;;
-        *)
-          err "Bootstrap is only supported on Fedora for Linux hosts (detected: ${ID:-unknown})."
-          exit 1
-          ;;
-      esac
-      ;;
-    *)
-      err "Bootstrap is unsupported on OS: $os"
-      exit 1
-      ;;
-  esac
 }
 
 apply_links_with_stow() {
@@ -349,12 +392,12 @@ install_plugins() {
 
 main() {
   parse_args "$@"
+  run_bootstrap
+  refresh_user_tool_path
   detect_components
   print_summary
-  run_bootstrap
   apply_links
   install_plugins
-
   info "Install flow complete."
 }
 

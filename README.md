@@ -1,63 +1,82 @@
 # Dotfiles
-Portable-first dotfiles managed with GNU Stow (or optional symlink fallback).
+Root-first, multi-OS dotfiles with guarded no-root and no-stow fallbacks.
 
 ## Quick Start
 ```bash
 git clone https://github.com/tansanrao/dotfiles ~/.dotfiles
 cd ~/.dotfiles
-chmod +x install.sh scripts/*.sh
+chmod +x install.sh scripts/*.sh tests/container/*.sh
 ./install.sh
 ```
 
-## Install Modes
-`./install.sh` is now configure-only by default:
-- Detects installed tools.
-- Applies only matching dotfile components.
-- Skips missing tools.
-- Installs zsh/tmux plugin repos only for selected components.
-
-### Restricted Host Examples
-```bash
-# Configure only the tools you care about, skip the rest
-./install.sh --only zsh,tmux,neovim
-
-# Same as above, but use fallback linker if stow is unavailable
-./install.sh --only zsh,tmux,neovim --allow-link-fallback
-
-# Preview actions without changing files
-./install.sh --only zsh,tmux,neovim --dry-run
-```
-
-### Full Bootstrap (explicit opt-in)
-```bash
-./install.sh --bootstrap
-```
-Bootstrap currently supports:
-- macOS (Homebrew + `Brewfile`)
+## Supported Hosts
+- macOS (Homebrew + Brewfile)
 - Fedora
+- Rocky Linux 9 / 10
+- CentOS Stream 9 / 10
+- Ubuntu 24.04 LTS
 
-## Installer Flags
-- `--bootstrap`: run OS bootstrap/package install scripts.
-- `--only a,b,c`: limit to selected components (`git,zsh,tmux,neovim,ghostty`).
+## Installer Behavior
+`./install.sh` now bootstraps by default.
+
+- Linux default mode is root-first:
+- If root: run privileged bootstrap directly.
+- If non-root + usable sudo: run privileged bootstrap via sudo.
+- If sudo is unavailable (or unusable in non-interactive mode): fail with guidance to rerun with `--no-root`.
+- macOS runs bootstrap + Brewfile by default.
+
+### Flags
+- `--no-root`: enable user-space bootstrap fallback on Linux (best-effort installs; unavailable tools are skipped with warnings).
+- `--only a,b,c`: restrict dotfile components (`git,zsh,tmux,neovim,ghostty`).
 - `--skip-plugins`: skip zsh/tmux plugin clone/update.
-- `--allow-link-fallback`: use `scripts/link-with-symlinks.sh` if GNU Stow is missing.
-- `--dry-run`: print actions without changing files.
+- `--allow-link-fallback`: allow symlink linker when `stow` is missing.
+- `--dry-run`: print actions without mutating files.
+
+## Neovim Strategy
+- Linux uses a pinned upstream Neovim release (`v0.11.6`) via official tarball install.
+- LazyVim minimum is enforced (`>= 0.11.2`).
+- This avoids stale distro Neovim on EL/Ubuntu channels.
+
+## Root vs No-Root Examples
+```bash
+# default root-first behavior
+./install.sh
+
+# explicit user-space fallback
+./install.sh --no-root --allow-link-fallback
+
+# focused server setup
+./install.sh --no-root --allow-link-fallback --only zsh,tmux,neovim
+```
 
 ## Plugin Paths
-Plugin repos are cloned into user data paths, not inside `stow/`:
+Plugins are cloned into user data locations:
 - Zsh plugins: `${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles/plugins/zsh`
 - TPM: `${XDG_DATA_HOME:-$HOME/.local/share}/tmux/plugins/tpm`
 
+## Container Test Matrix
+Run Linux matrix tests (full install assertions):
+```bash
+./scripts/test-install-matrix.sh --suite all
+```
+
+Subset examples:
+```bash
+./scripts/test-install-matrix.sh --suite root --images fedora,rocky9,ubuntu2404
+./scripts/test-install-matrix.sh --suite guards --images rocky9,ubuntu2404
+./scripts/test-install-matrix.sh --suite noroot --images cs9,cs10
+```
+
+Optional report:
+```bash
+./scripts/test-install-matrix.sh --suite all --json-report tests/artifacts/report.json
+```
+
 ## Legacy Local Cleanup
-If you used the old layout, remove legacy local plugin directories under `stow/`:
+If you previously had plugin clones in `stow/`, remove legacy local copies:
 ```bash
 rm -rf \
   ~/.dotfiles/stow/zsh/.config/zsh/pure \
   ~/.dotfiles/stow/zsh/.config/zsh/zsh-syntax-highlighting \
   ~/.dotfiles/stow/tmux/.config/tmux/plugins
 ```
-
-## Terminal Pipeline Notes
-- Ghostty: `Shift+Enter` soft newline via `keybind = shift+enter=text:\n`.
-- tmux: prefers `tmux-256color`, falls back when terminfo is unavailable.
-- Neovim: tries to bootstrap `lazy.nvim`; if unavailable (or no `git`), opens without plugin manager instead of exiting.

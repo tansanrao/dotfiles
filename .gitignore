@@ -23,6 +23,9 @@ stow/zsh/.config/zsh/zsh-syntax-highlighting/
 *.tmp
 *.bak
 
+# Test artifacts
+tests/artifacts/
+
 # Zsh local files
 stow/zsh/.config/zsh/.zcompdump
 stow/zsh/.config/zsh/.zsh_history

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Bootstrap Fedora hosts for dotfiles usage.
+# Bootstrap Rocky Linux / CentOS Stream hosts.
 
 set -euo pipefail
 
@@ -23,7 +23,7 @@ while (( "$#" > 0 )); do
       ;;
     -h|--help)
       cat <<'USAGE'
-Usage: scripts/bootstrap-fedora.sh [--no-root] [--dry-run]
+Usage: scripts/bootstrap-el.sh [--no-root] [--dry-run]
 USAGE
       exit 0
       ;;
@@ -39,19 +39,53 @@ if [[ -f /etc/os-release ]]; then
   . /etc/os-release
 fi
 
-if [[ "${ID:-}" != "fedora" ]]; then
-  fatal "This script targets Fedora (ID=fedora)."
+case "${ID:-}" in
+  rocky|centos)
+    ;;
+  *)
+    fatal "bootstrap-el.sh supports rocky/centos IDs only (detected: ${ID:-unknown})"
+    ;;
+esac
+
+major="${VERSION_ID%%.*}"
+if [[ "$major" != "9" && "$major" != "10" ]]; then
+  fatal "bootstrap-el.sh supports major versions 9 and 10 (detected: ${VERSION_ID:-unknown})"
 fi
 
 bootstrap_init "$NO_ROOT" "$DRY_RUN"
 
 if [[ "$NO_ROOT" != "true" ]]; then
-  info "Refreshing Fedora package metadata..."
+  info "Refreshing DNF metadata..."
   run_root_cmd dnf -y makecache --refresh
 
+  if has_cmd crb; then
+    if ! run_root_cmd crb enable; then
+      warn "Failed to enable CRB with 'crb enable'; continuing"
+    fi
+  else
+    dnf_install_if_available dnf-plugins-core
+    if ! run_root_cmd dnf config-manager --set-enabled crb; then
+      warn "Failed to enable CRB via dnf config-manager; continuing"
+    fi
+  fi
+
+  epel_rpm="https://dl.fedoraproject.org/pub/epel/epel-release-latest-${major}.noarch.rpm"
+  if ! run_root_cmd dnf -y install "$epel_rpm"; then
+    warn "Failed to install EPEL release package: $epel_rpm"
+  fi
+
+  run_root_cmd dnf -y makecache --refresh || true
+
   dnf_install_if_available \
-    curl wget unzip git stow tmux zsh ripgrep fd-find fzf bat htop jq yq tree zoxide eza \
-    gcc make pkgconf-pkg-config
+    curl-minimal wget unzip git stow tmux zsh ripgrep fd-find fzf bat htop jq yq tree zoxide eza \
+    gcc make pkgconf-pkg-config perl-File-Copy
+
+  if ! has_cmd stow; then
+    warn "GNU stow package is unavailable on this host; attempting source install."
+    if ! ensure_gnu_stow; then
+      warn "GNU stow source install failed. Use --allow-link-fallback with install.sh if needed."
+    fi
+  fi
 else
   warn "Skipping dnf package installation in --no-root mode"
 fi
@@ -113,4 +147,4 @@ else
   install_or_upgrade_neovim_linux root
 fi
 
-info "Fedora bootstrap complete."
+info "EL bootstrap complete for ${ID:-unknown} ${VERSION_ID:-unknown}."

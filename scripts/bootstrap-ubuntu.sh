@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Bootstrap Fedora hosts for dotfiles usage.
+# Bootstrap Ubuntu 24.04 hosts for dotfiles usage.
 
 set -euo pipefail
 
@@ -23,7 +23,7 @@ while (( "$#" > 0 )); do
       ;;
     -h|--help)
       cat <<'USAGE'
-Usage: scripts/bootstrap-fedora.sh [--no-root] [--dry-run]
+Usage: scripts/bootstrap-ubuntu.sh [--no-root] [--dry-run]
 USAGE
       exit 0
       ;;
@@ -39,21 +39,25 @@ if [[ -f /etc/os-release ]]; then
   . /etc/os-release
 fi
 
-if [[ "${ID:-}" != "fedora" ]]; then
-  fatal "This script targets Fedora (ID=fedora)."
+if [[ "${ID:-}" != "ubuntu" ]]; then
+  fatal "bootstrap-ubuntu.sh targets Ubuntu only (detected: ${ID:-unknown})"
+fi
+
+if [[ "${VERSION_ID:-}" != 24.04* ]]; then
+  fatal "bootstrap-ubuntu.sh targets Ubuntu 24.04.x only (detected: ${VERSION_ID:-unknown})"
 fi
 
 bootstrap_init "$NO_ROOT" "$DRY_RUN"
 
 if [[ "$NO_ROOT" != "true" ]]; then
-  info "Refreshing Fedora package metadata..."
-  run_root_cmd dnf -y makecache --refresh
+  info "Refreshing apt metadata..."
+  run_root_cmd env DEBIAN_FRONTEND=noninteractive apt-get update
 
-  dnf_install_if_available \
-    curl wget unzip git stow tmux zsh ripgrep fd-find fzf bat htop jq yq tree zoxide eza \
-    gcc make pkgconf-pkg-config
+  apt_install_if_available \
+    ca-certificates curl wget unzip git stow tmux zsh ripgrep fd-find fzf bat htop zoxide eza jq yq tree \
+    build-essential pkg-config
 else
-  warn "Skipping dnf package installation in --no-root mode"
+  warn "Skipping apt package installation in --no-root mode"
 fi
 
 ensure_rustup_toolchain
@@ -68,8 +72,8 @@ if ! has_cmd fd && ! has_cmd fdfind; then
 fi
 
 if ! has_cmd zoxide; then
-  if [[ "$NO_ROOT" != "true" ]] && dnf_has_package zoxide; then
-    dnf_install_if_available zoxide
+  if [[ "$NO_ROOT" != "true" ]] && apt_has_package zoxide; then
+    apt_install_if_available zoxide
   fi
   if ! has_cmd zoxide; then
     if ! ensure_cargo_crate "zoxide" "zoxide"; then
@@ -79,8 +83,8 @@ if ! has_cmd zoxide; then
 fi
 
 if ! has_cmd eza; then
-  if [[ "$NO_ROOT" != "true" ]] && dnf_has_package eza; then
-    dnf_install_if_available eza
+  if [[ "$NO_ROOT" != "true" ]] && apt_has_package eza; then
+    apt_install_if_available eza
   fi
   if ! has_cmd eza; then
     if ! ensure_cargo_crate "eza" "eza"; then
@@ -90,8 +94,8 @@ if ! has_cmd eza; then
 fi
 
 if ! has_cmd fzf; then
-  if [[ "$NO_ROOT" != "true" ]] && dnf_has_package fzf; then
-    dnf_install_if_available fzf
+  if [[ "$NO_ROOT" != "true" ]] && apt_has_package fzf; then
+    apt_install_if_available fzf
   fi
   if ! has_cmd fzf; then
     ensure_fzf_user_binary
@@ -113,4 +117,4 @@ else
   install_or_upgrade_neovim_linux root
 fi
 
-info "Fedora bootstrap complete."
+info "Ubuntu bootstrap complete."
