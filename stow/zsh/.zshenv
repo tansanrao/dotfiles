@@ -1,11 +1,3 @@
 # ~/.zshenv
-# Set ZDOTDIR to use custom zsh config directory
-export ZDOTDIR="$HOME/.config/zsh"
-
-# Source our custom zshrc if it exists
-if [[ -f "$ZDOTDIR/.zshrc" ]]; then
-  source "$ZDOTDIR/.zshrc"
-fi 
-if [[ -f "$HOME/.cargo/env" ]]; then
-  . "$HOME/.cargo/env"
-fi
+# Keep this minimal: it is sourced for every zsh invocation (interactive and non-interactive).
+export ZDOTDIR="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"

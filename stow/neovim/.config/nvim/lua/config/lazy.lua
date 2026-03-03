@@ -1,20 +1,32 @@
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+local function notify(msg, level)
+  vim.schedule(function()
+    vim.notify(msg, level or vim.log.levels.WARN, { title = "dotfiles" })
+  end)
+end
+
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  if vim.fn.executable("git") == 0 then
+    notify("lazy.nvim is missing and git is unavailable; starting without plugin manager.", vim.log.levels.WARN)
+    return
+  end
+
   local lazyrepo = "https://github.com/folke/lazy.nvim.git"
   local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
   if vim.v.shell_error ~= 0 then
-    vim.api.nvim_echo({
-      { "Failed to clone lazy.nvim:\n", "ErrorMsg" },
-      { out, "WarningMsg" },
-      { "\nPress any key to exit..." },
-    }, true, {})
-    vim.fn.getchar()
-    os.exit(1)
+    notify("Failed to clone lazy.nvim; starting without plugins.\n" .. out, vim.log.levels.ERROR)
+    return
   end
 end
 vim.opt.rtp:prepend(lazypath)
 
-require("lazy").setup({
+local ok, lazy = pcall(require, "lazy")
+if not ok then
+  notify("lazy.nvim failed to load; starting without plugins.", vim.log.levels.ERROR)
+  return
+end
+
+lazy.setup({
   spec = {
     -- add LazyVim and import its plugins
     { "LazyVim/LazyVim", import = "lazyvim.plugins" },

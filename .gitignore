@@ -11,7 +11,7 @@
 # Backup files
 backup/
 
-# Plugin directories (managed by install-plugins.sh)
+# Legacy local plugin directories from the old stow-based plugin layout
 stow/tmux/.config/tmux/plugins/
 stow/zsh/.config/zsh/pure/
 stow/zsh/.config/zsh/zsh-syntax-highlighting/
