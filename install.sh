@@ -205,10 +205,12 @@ resolve_linux_bootstrap_script() {
       fi
       ;;
     ubuntu)
-      if [[ "${VERSION_ID:-}" == 24.04* ]]; then
+      local ubuntu_version
+      ubuntu_version="${VERSION_ID:-}"
+      if [[ "$ubuntu_version" == 24.04* || "$ubuntu_version" == 25.10* ]]; then
         echo "$REPO_ROOT/scripts/bootstrap-ubuntu.sh"
       else
-        err "Unsupported Ubuntu version: ${VERSION_ID:-unknown} (expected 24.04.x)"
+        err "Unsupported Ubuntu version: ${VERSION_ID:-unknown} (expected 24.04.x or 25.10)"
         exit 1
       fi
       ;;

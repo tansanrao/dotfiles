@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Bootstrap Ubuntu 24.04 hosts for dotfiles usage.
+# Bootstrap supported Ubuntu hosts for dotfiles usage.
 
 set -euo pipefail
 
@@ -43,8 +43,8 @@ if [[ "${ID:-}" != "ubuntu" ]]; then
   fatal "bootstrap-ubuntu.sh targets Ubuntu only (detected: ${ID:-unknown})"
 fi
 
-if [[ "${VERSION_ID:-}" != 24.04* ]]; then
-  fatal "bootstrap-ubuntu.sh targets Ubuntu 24.04.x only (detected: ${VERSION_ID:-unknown})"
+if [[ "${VERSION_ID:-}" != 24.04* && "${VERSION_ID:-}" != 25.10* ]]; then
+  fatal "bootstrap-ubuntu.sh targets Ubuntu 24.04.x and 25.10 only (detected: ${VERSION_ID:-unknown})"
 fi
 
 bootstrap_init "$NO_ROOT" "$DRY_RUN"

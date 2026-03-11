@@ -14,7 +14,7 @@ chmod +x install.sh scripts/*.sh tests/container/*.sh
 - Fedora 43
 - Rocky Linux 9 / 10
 - CentOS Stream 9 / 10
-- Ubuntu 24.04 LTS
+- Ubuntu 24.04 LTS / 25.10
 
 ## Installer Behavior
 `./install.sh` bootstraps by default.
@@ -69,9 +69,9 @@ Run Linux matrix tests:
 
 Subset examples:
 ```bash
-./scripts/test-install-matrix.sh --suite root --images fedora,rocky9,rocky10,cs9,cs10,ubuntu2404
-./scripts/test-install-matrix.sh --suite guards --images fedora,rocky9,rocky10,cs9,cs10,ubuntu2404
-./scripts/test-install-matrix.sh --suite noroot --images fedora,rocky9,rocky10,cs9,cs10,ubuntu2404
+./scripts/test-install-matrix.sh --suite root --images fedora,rocky9,rocky10,cs9,cs10,ubuntu2404,ubuntu2510
+./scripts/test-install-matrix.sh --suite guards --images fedora,rocky9,rocky10,cs9,cs10,ubuntu2404,ubuntu2510
+./scripts/test-install-matrix.sh --suite noroot --images fedora,rocky9,rocky10,cs9,cs10,ubuntu2404,ubuntu2510
 ```
 
 Optional report:

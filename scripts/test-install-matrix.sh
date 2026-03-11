@@ -25,7 +25,7 @@ Usage: scripts/test-install-matrix.sh [options]
 
 Options:
   --suite all|root|noroot|guards   Test suite to run (default: all)
-  --images a,b,c                    Matrix subset by key (fedora,rocky9,rocky10,cs9,cs10,ubuntu2404)
+  --images a,b,c                    Matrix subset by key (fedora,rocky9,rocky10,cs9,cs10,ubuntu2404,ubuntu2510)
   --keep-containers                 Keep failed/success containers for debugging
   --json-report <path>              Write JSON report to path
   --max-parallel <n>                Maximum parallel jobs (currently executed sequentially)
@@ -85,7 +85,7 @@ if [[ "$MAX_PARALLEL" != "1" ]]; then
   test_warn "--max-parallel is accepted but cases currently run sequentially"
 fi
 
-declare -a MATRIX_KEYS=(fedora rocky9 rocky10 cs9 cs10 ubuntu2404)
+declare -a MATRIX_KEYS=(fedora rocky9 rocky10 cs9 cs10 ubuntu2404 ubuntu2510)
 
 image_for_key() {
   case "$1" in
@@ -95,6 +95,7 @@ image_for_key() {
     cs9) echo "$CENTOS_STREAM9_IMAGE" ;;
     cs10) echo "$CENTOS_STREAM10_IMAGE" ;;
     ubuntu2404) echo "$UBUNTU2404_IMAGE" ;;
+    ubuntu2510) echo "$UBUNTU2510_IMAGE" ;;
     *) return 1 ;;
   esac
 }
@@ -103,7 +104,7 @@ family_for_key() {
   case "$1" in
     fedora) echo "fedora" ;;
     rocky9|rocky10|cs9|cs10) echo "el" ;;
-    ubuntu2404) echo "ubuntu" ;;
+    ubuntu2404|ubuntu2510) echo "ubuntu" ;;
     *) return 1 ;;
   esac
 }
@@ -123,7 +124,7 @@ select_matrix_keys() {
       continue
     fi
     case "$entry" in
-      fedora|rocky9|rocky10|cs9|cs10|ubuntu2404)
+      fedora|rocky9|rocky10|cs9|cs10|ubuntu2404|ubuntu2510)
         printf '%s\n' "$entry"
         ;;
       *)
