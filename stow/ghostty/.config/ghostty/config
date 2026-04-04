@@ -1,7 +1,7 @@
 # Theme config
 theme = Ayu
 font-family = "SF Mono"
-font-size = 12
+font-size = 14
 font-thicken = true
 window-colorspace = display-p3 
 term = xterm-ghostty
