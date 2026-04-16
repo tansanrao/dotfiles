@@ -1,6 +1,6 @@
 # Theme config
 theme = Ayu
-font-family = "SF Mono"
+font-family = "BlexMono Nerd Font"
 font-size = 14
 font-thicken = true
 window-colorspace = display-p3 

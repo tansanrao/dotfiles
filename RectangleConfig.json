@@ -97,6 +97,9 @@
     "hideMenubarIcon" : {
       "bool" : true
     },
+    "horizontalSplitRatio" : {
+      "float" : 50
+    },
     "ignoreDragSnapToo" : {
       "int" : 0
     },
@@ -172,6 +175,9 @@
     "shortEdgeSnapAreaSize" : {
       "float" : 145
     },
+    "showAdditionalSizesInMenu" : {
+      "int" : 0
+    },
     "showAllActionsInMenu" : {
       "int" : 0
     },
@@ -235,6 +241,9 @@
     "unsnapRestore" : {
       "int" : 0
     },
+    "verticalSplitRatio" : {
+      "float" : 50
+    },
     "widthStepSize" : {
       "float" : 30
     },
@@ -270,6 +279,10 @@
     "center" : {
       "keyCode" : 8,
       "modifierFlags" : 786432
+    },
+    "centerHalf" : {
+      "keyCode" : 125,
+      "modifierFlags" : 1835008
     },
     "centerThird" : {
       "keyCode" : 3,
@@ -380,5 +393,5 @@
       "modifierFlags" : 786432
     }
   },
-  "version" : "99"
+  "version" : "101"
 }
