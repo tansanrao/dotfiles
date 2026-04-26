@@ -1,5 +1,6 @@
 # Dotfiles
-Root-first, deterministic dotfiles bootstrap for a known-good OS matrix.
+
+Dotfiles bootstrap for macOS workstations and Ubuntu servers/containers.
 
 ## Quick Start
 ```bash
@@ -10,68 +11,67 @@ chmod +x install.sh scripts/*.sh tests/container/*.sh
 ```
 
 ## Supported Hosts
-- macOS (Homebrew + Brewfile)
-- Fedora 43
-- Rocky Linux 9 / 10
-- CentOS Stream 9 / 10
-- Ubuntu 24.04 LTS / 25.10
+- macOS with Homebrew and the tracked `Brewfile`
+- Ubuntu major version 24 or newer
+
+Linux hosts other than Ubuntu are intentionally unsupported.
 
 ## Installer Behavior
 `./install.sh` bootstraps by default.
 
-- Linux default mode is root-first:
-- If root: run privileged bootstrap directly.
-- If non-root + usable sudo: run privileged bootstrap via sudo.
-- If sudo is unavailable (or unusable in non-interactive mode): fail with guidance to rerun with `--no-root`.
-- macOS runs bootstrap + Brewfile by default.
+Rerunning `./install.sh` is safe. It reapplies links and updates managed tools/plugins instead of requiring a clean machine.
 
-### Fallback Modes
-Only two Linux fallback modes are supported:
-- `--no-root`: user-space bootstrap path (no package-manager installs as root).
-- `--no-stow`: use built-in symlink linker when GNU stow is unavailable.
+macOS behavior is unchanged:
+- Run `scripts/bootstrap-mac.sh`.
+- Apply the tracked `Brewfile` when Homebrew is available.
+- Link macOS-relevant dotfile components, including Ghostty when installed.
 
-Compatibility:
-- `--allow-link-fallback` is kept as a deprecated alias for `--no-stow`.
-- EL10 hosts auto-enable no-stow linker mode when `stow` is unavailable.
+Ubuntu behavior is privilege-aware:
+- If running as root or with usable sudo, install apt packages and toolchains.
+- If root/sudo is unavailable, skip package installs, Rust, Node, pnpm, Neovim, and plugins.
+- Dotfiles are still linked in no-root mode.
 
-### Other Flags
-- `--only a,b,c`: restrict dotfile components (`git,zsh,tmux,neovim,ghostty`).
+## Linking
+- Use GNU `stow` when available.
+- On privileged Ubuntu, install `stow` through apt when it is missing.
+- If `stow` is unavailable, use the built-in symlink fallback automatically.
+- Repeated runs restow or reuse existing fallback symlinks.
+
+## Options
+- `--only a,b,c`: restrict dotfile components.
 - `--skip-plugins`: skip zsh/tmux plugin clone/update.
 - `--dry-run`: print actions without mutating files.
+- `-h`, `--help`: show help.
+
+Supported components:
+- macOS: `git,zsh,tmux,neovim,ghostty`
+- Ubuntu: `git,zsh,tmux,neovim`
 
 ## Toolchain Strategy
-- Node.js is standardized via `fnm` to latest `v24.x` on each run.
-- Rust is standardized via `rustup` stable.
-- Linux Neovim is installed from upstream release tarballs (`v0.11.6` target), enforcing LazyVim minimum `>= 0.11.2`.
+Privileged Ubuntu installs:
+- Rust via `rustup` stable.
+- Node.js via `fnm`, pinned to the latest `v24.x` available at install time.
+- pnpm via Corepack.
+- Neovim from upstream Linux release tarballs (`v0.11.6` target), enforcing LazyVim minimum `>= 0.11.2`.
 
-## Example Runs
-```bash
-# default root-first behavior
-./install.sh
-
-# explicit user-space + no-stow fallback
-./install.sh --no-root --no-stow
-
-# focused server setup
-./install.sh --no-root --no-stow --only zsh,tmux,neovim
-```
+On rerun, these steps update existing managed installs where appropriate and skip work that already satisfies the target version.
 
 ## Plugin Paths
-Plugins are cloned into user data locations:
+Plugins are cloned only during privileged installs:
 - Zsh plugins: `${XDG_DATA_HOME:-$HOME/.local/share}/dotfiles/plugins/zsh`
 - TPM: `${XDG_DATA_HOME:-$HOME/.local/share}/tmux/plugins/tpm`
 
 ## Container Test Matrix
-Run Linux matrix tests:
+Run Ubuntu matrix tests:
 ```bash
 ./scripts/test-install-matrix.sh --suite all
 ```
 
 Subset examples:
 ```bash
-./scripts/test-install-matrix.sh --suite root --images fedora,rocky9,rocky10,cs9,cs10,ubuntu2404,ubuntu2510
-./scripts/test-install-matrix.sh --suite guards --images fedora,rocky9,rocky10,cs9,cs10,ubuntu2404,ubuntu2510
-./scripts/test-install-matrix.sh --suite noroot --images fedora,rocky9,rocky10,cs9,cs10,ubuntu2404,ubuntu2510
+./scripts/test-install-matrix.sh --suite root --images ubuntu2404
+./scripts/test-install-matrix.sh --suite noroot --images ubuntu2404
+./scripts/test-install-matrix.sh --suite guards --images ubuntu2204
 ```
 
 Optional report:

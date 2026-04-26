@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Root-first dotfiles installer with deterministic Linux bootstraps.
+# Dotfiles installer for macOS and Ubuntu 24+.
 
 set -euo pipefail
 
@@ -7,14 +7,14 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STOW_DIR="$REPO_ROOT/stow"
 TARGET_DIR="$HOME"
 
-NO_ROOT=false
 SKIP_PLUGINS=false
-NO_STOW=false
-USED_ALLOW_LINK_FALLBACK_ALIAS=false
 DRY_RUN=false
 ONLY_COMPONENTS=""
+LINUX_PRIVILEGED=false
 
 ALL_COMPONENTS=(git zsh tmux neovim ghostty)
+LINUX_COMPONENTS=(git zsh tmux neovim)
+MAC_COMPONENTS=(git zsh tmux neovim ghostty)
 SELECTED_COMPONENTS=()
 SKIPPED_COMPONENTS=()
 
@@ -36,20 +36,19 @@ Usage: ./install.sh [options]
 
 Default behavior:
   - Detect host OS and run the matching bootstrap script
-  - Linux bootstrap is root-first by default (root or sudo)
-  - Apply dotfile links for detected installed components
+  - macOS uses the existing Homebrew bootstrap flow
+  - Ubuntu 24+ installs packages/toolchains only with root or sudo
+  - Ubuntu without root/sudo links dotfiles only
 
 Options:
-  --no-root              Use user-space bootstrap fallback (Linux)
-  --no-stow              Use built-in symlink linker when GNU stow is unavailable
   --only a,b,c           Limit component install to a CSV subset
   --skip-plugins         Skip plugin dependency install/update
-  --allow-link-fallback  Deprecated alias for --no-stow
   --dry-run              Print planned actions without changing files
   -h, --help             Show this help message
 
 Components:
-  git, zsh, tmux, neovim, ghostty
+  macOS: git, zsh, tmux, neovim, ghostty
+  Ubuntu: git, zsh, tmux, neovim
 USAGE
 }
 
@@ -97,6 +96,20 @@ refresh_user_tool_path() {
   export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$fnm_dir:$PATH"
 }
 
+host_supported_components() {
+  case "$(uname -s)" in
+    Darwin)
+      printf '%s\n' "${MAC_COMPONENTS[@]}"
+      ;;
+    Linux)
+      printf '%s\n' "${LINUX_COMPONENTS[@]}"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 stow_ignore_regex_for_component() {
   case "$1" in
     zsh)
@@ -114,18 +127,8 @@ stow_ignore_regex_for_component() {
 parse_args() {
   while (( "$#" > 0 )); do
     case "$1" in
-      --no-root)
-        NO_ROOT=true
-        ;;
       --skip-plugins)
         SKIP_PLUGINS=true
-        ;;
-      --no-stow)
-        NO_STOW=true
-        ;;
-      --allow-link-fallback)
-        NO_STOW=true
-        USED_ALLOW_LINK_FALLBACK_ALIAS=true
         ;;
       --dry-run)
         DRY_RUN=true
@@ -145,6 +148,10 @@ parse_args() {
         err "--bootstrap has been removed. Bootstrap is now default behavior."
         exit 1
         ;;
+      --no-root|--no-stow|--allow-link-fallback)
+        err "$1 is no longer supported. Ubuntu privilege and stow fallback modes are detected automatically."
+        exit 1
+        ;;
       -h|--help)
         usage
         exit 0
@@ -157,28 +164,24 @@ parse_args() {
     esac
     shift
   done
-
-  if [[ "$USED_ALLOW_LINK_FALLBACK_ALIAS" == "true" ]]; then
-    warn "--allow-link-fallback is deprecated; use --no-stow."
-  fi
 }
 
-is_el10_host() {
-  if [[ "$(uname -s)" != "Linux" || ! -f /etc/os-release ]]; then
-    return 1
+linux_has_root() {
+  [[ "$(uname -s)" == "Linux" ]] || return 1
+  if [[ "$EUID" -eq 0 ]]; then
+    return 0
   fi
+  if command -v sudo >/dev/null 2>&1; then
+    sudo -n true >/dev/null 2>&1 || [[ -t 0 && -t 1 ]]
+    return
+  fi
+  return 1
+}
 
-  # shellcheck disable=SC1091
-  . /etc/os-release
-
-  case "${ID:-}" in
-    rocky|centos)
-      [[ "${VERSION_ID%%.*}" == "10" ]]
-      ;;
-    *)
-      return 1
-      ;;
-  esac
+ubuntu_major_supported() {
+  local version_id="$1"
+  local major="${version_id%%.*}"
+  [[ "$major" =~ ^[0-9]+$ ]] && (( major >= 24 ))
 }
 
 resolve_linux_bootstrap_script() {
@@ -191,31 +194,16 @@ resolve_linux_bootstrap_script() {
   . /etc/os-release
 
   case "${ID:-}" in
-    fedora)
-      echo "$REPO_ROOT/scripts/bootstrap-fedora.sh"
-      ;;
-    rocky|centos)
-      local major
-      major="${VERSION_ID%%.*}"
-      if [[ "$major" == "9" || "$major" == "10" ]]; then
-        echo "$REPO_ROOT/scripts/bootstrap-el.sh"
-      else
-        err "Unsupported ${ID:-unknown} version: ${VERSION_ID:-unknown}"
-        exit 1
-      fi
-      ;;
     ubuntu)
-      local ubuntu_version
-      ubuntu_version="${VERSION_ID:-}"
-      if [[ "$ubuntu_version" == 24.04* || "$ubuntu_version" == 25.10* ]]; then
+      if ubuntu_major_supported "${VERSION_ID:-}"; then
         echo "$REPO_ROOT/scripts/bootstrap-ubuntu.sh"
       else
-        err "Unsupported Ubuntu version: ${VERSION_ID:-unknown} (expected 24.04.x or 25.10)"
+        err "Unsupported Ubuntu version: ${VERSION_ID:-unknown} (expected major version 24 or newer)"
         exit 1
       fi
       ;;
     *)
-      err "Unsupported Linux distro ID: ${ID:-unknown}"
+      err "Unsupported Linux distro ID: ${ID:-unknown} (expected ubuntu)"
       exit 1
       ;;
   esac
@@ -243,16 +231,13 @@ run_bootstrap() {
       ;;
     Linux)
       script="$(resolve_linux_bootstrap_script)"
-
-      if [[ "$NO_ROOT" != "true" && "$EUID" -ne 0 ]] && ! command -v sudo >/dev/null 2>&1; then
-        err "No root or sudo privileges detected. Re-run with --no-root for user-space bootstrap."
-        exit 1
+      if linux_has_root; then
+        LINUX_PRIVILEGED=true
+      else
+        LINUX_PRIVILEGED=false
       fi
 
       local args=()
-      if [[ "$NO_ROOT" == "true" ]]; then
-        args+=("--no-root")
-      fi
       if [[ "$DRY_RUN" == "true" ]]; then
         args+=("--dry-run")
       fi
@@ -269,13 +254,20 @@ run_bootstrap() {
 
 detect_components() {
   local candidates=()
+  local supported=()
+  local supported_component
+  while IFS= read -r supported_component; do
+    [[ -n "$supported_component" ]] || continue
+    supported+=("$supported_component")
+  done < <(host_supported_components)
+
   if [[ -n "$ONLY_COMPONENTS" ]]; then
     IFS=',' read -r -a candidates <<< "$ONLY_COMPONENTS"
   else
-    candidates=("${ALL_COMPONENTS[@]}")
+    candidates=("${supported[@]}")
   fi
 
-  local component cmd
+  local component
   for component in "${candidates[@]}"; do
     component="${component//[[:space:]]/}"
     [[ -n "$component" ]] || continue
@@ -285,15 +277,19 @@ detect_components() {
       exit 1
     fi
 
+    if ! array_contains "$component" "${supported[@]}"; then
+      err "Component is not supported on this host: $component"
+      exit 1
+    fi
+
     if array_contains "$component" "${SELECTED_COMPONENTS[@]-}"; then
       continue
     fi
 
-    cmd="$(component_command "$component")"
-    if command -v "$cmd" >/dev/null 2>&1; then
+    if [[ -d "$STOW_DIR/$component" ]]; then
       SELECTED_COMPONENTS+=("$component")
     else
-      SKIPPED_COMPONENTS+=("$component (missing command: $cmd)")
+      SKIPPED_COMPONENTS+=("$component (missing package directory: $STOW_DIR/$component)")
     fi
   done
 }
@@ -357,17 +353,6 @@ apply_links() {
     return
   fi
 
-  local use_no_stow="$NO_STOW"
-  if [[ "$use_no_stow" != "true" ]] && is_el10_host; then
-    use_no_stow=true
-    info "EL10 detected; using --no-stow linker mode by default."
-  fi
-
-  if [[ "$use_no_stow" != "true" ]]; then
-    err "GNU stow is not installed. Re-run with --no-stow to use the built-in symlink linker."
-    exit 1
-  fi
-
   if [[ ! -x "$REPO_ROOT/scripts/link-with-symlinks.sh" ]]; then
     err "Fallback linker script not found or not executable: scripts/link-with-symlinks.sh"
     exit 1
@@ -394,6 +379,11 @@ apply_links() {
 install_plugins() {
   if [[ "$SKIP_PLUGINS" == "true" ]]; then
     info "Skipping plugin install/update (--skip-plugins)."
+    return
+  fi
+
+  if [[ "$(uname -s)" == "Linux" && "$LINUX_PRIVILEGED" != "true" ]]; then
+    info "Skipping plugin install/update because root/sudo is unavailable on Linux."
     return
   fi
 

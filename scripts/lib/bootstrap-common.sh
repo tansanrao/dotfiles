@@ -6,7 +6,7 @@ if [[ -n "${BOOTSTRAP_COMMON_LOADED:-}" ]]; then
 fi
 BOOTSTRAP_COMMON_LOADED=1
 
-BOOTSTRAP_NO_ROOT=false
+BOOTSTRAP_PRIVILEGED=false
 BOOTSTRAP_DRY_RUN=false
 BOOTSTRAP_SUDO_CMD=""
 
@@ -50,8 +50,8 @@ run_cmd() {
 }
 
 run_root_cmd() {
-  if [[ "$BOOTSTRAP_NO_ROOT" == "true" ]]; then
-    fatal "run_root_cmd called in --no-root mode"
+  if [[ "$BOOTSTRAP_PRIVILEGED" != "true" ]]; then
+    fatal "run_root_cmd called without root/sudo privileges"
   fi
 
   if [[ -n "$BOOTSTRAP_SUDO_CMD" ]]; then
@@ -73,8 +73,8 @@ run_shell() {
 
 run_root_shell() {
   local snippet="$1"
-  if [[ "$BOOTSTRAP_NO_ROOT" == "true" ]]; then
-    fatal "run_root_shell called in --no-root mode"
+  if [[ "$BOOTSTRAP_PRIVILEGED" != "true" ]]; then
+    fatal "run_root_shell called without root/sudo privileges"
   fi
 
   if [[ "$BOOTSTRAP_DRY_RUN" == "true" ]]; then
@@ -97,25 +97,21 @@ semver_ge() {
 }
 
 ensure_local_path() {
-  export PATH="$HOME/.local/bin:$PATH"
+  local fnm_dir="${XDG_DATA_HOME:-$HOME/.local/share}/fnm"
+  export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$fnm_dir:$PATH"
 }
 
 bootstrap_init() {
-  local no_root="$1"
-  local dry_run="$2"
+  local dry_run="$1"
 
-  BOOTSTRAP_NO_ROOT="$no_root"
+  BOOTSTRAP_PRIVILEGED=false
   BOOTSTRAP_DRY_RUN="$dry_run"
   BOOTSTRAP_SUDO_CMD=""
 
   ensure_local_path
 
-  if [[ "$BOOTSTRAP_NO_ROOT" == "true" ]]; then
-    info "Bootstrap mode: user-space (--no-root)"
-    return
-  fi
-
   if [[ "$EUID" -eq 0 ]]; then
+    BOOTSTRAP_PRIVILEGED=true
     info "Bootstrap mode: privileged (root)"
     return
   fi
@@ -123,20 +119,24 @@ bootstrap_init() {
   if has_cmd sudo; then
     if sudo -n true >/dev/null 2>&1; then
       BOOTSTRAP_SUDO_CMD="sudo"
+      BOOTSTRAP_PRIVILEGED=true
       info "Bootstrap mode: privileged (sudo)"
       return
     fi
 
     if [[ -t 0 && -t 1 ]]; then
       BOOTSTRAP_SUDO_CMD="sudo"
+      BOOTSTRAP_PRIVILEGED=true
       info "Bootstrap mode: privileged (sudo, password may be required)"
       return
     fi
-
-    fatal "No usable root or sudo privileges detected in this non-interactive session. Re-run with --no-root for user-space bootstrap."
   fi
 
-  fatal "No root or sudo privileges detected. Re-run with --no-root for user-space bootstrap."
+  info "Bootstrap mode: link-only (no root/sudo available)"
+}
+
+bootstrap_is_privileged() {
+  [[ "$BOOTSTRAP_PRIVILEGED" == "true" ]]
 }
 
 ensure_cargo_env() {
@@ -149,11 +149,11 @@ ensure_cargo_env() {
 fetch_url_stdout() {
   local url="$1"
   if has_cmd curl; then
-    curl -fsSL "$url"
+    curl -fsSL --connect-timeout 10 --max-time 60 --retry 3 --retry-delay 1 "$url"
     return
   fi
   if has_cmd wget; then
-    wget -qO- "$url"
+    wget --timeout=60 --tries=3 -qO- "$url"
     return
   fi
   fatal "Neither curl nor wget is available to fetch: $url"
@@ -169,12 +169,12 @@ try_download_file() {
   fi
 
   if has_cmd curl; then
-    curl -fL --retry 3 --retry-delay 1 -o "$dest" "$url"
+    curl -fL --connect-timeout 10 --max-time 300 --retry 3 --retry-delay 1 -o "$dest" "$url"
     return $?
   fi
 
   if has_cmd wget; then
-    wget -O "$dest" "$url"
+    wget --timeout=300 --tries=3 -O "$dest" "$url"
     return $?
   fi
 
@@ -252,11 +252,9 @@ resolve_latest_node24() {
   local version
   version="$(fetch_url_stdout "https://nodejs.org/dist/index.json" | awk -F'"' '
     /"version":/ {v=$4}
-    /"lts":/ {
-      if ($4 != "false" && v ~ /^v24\./) {
-        print v
-        exit
-      }
+    v ~ /^v24\./ {
+      print v
+      exit
     }
   ')"
 
@@ -272,7 +270,7 @@ expose_node_binaries() {
   local binary target
 
   mkdir -p "$local_bin"
-  for binary in node npm npx corepack; do
+  for binary in fnm node npm npx corepack pnpm; do
     if has_cmd "$binary"; then
       target="$(command -v "$binary")"
       ln -sfn "$target" "$local_bin/$binary"
@@ -288,21 +286,58 @@ ensure_node24_latest() {
   if [[ "$BOOTSTRAP_DRY_RUN" == "true" ]]; then
     info "[dry-run] fnm install <latest-v24.x>"
     info "[dry-run] fnm default <latest-v24.x>"
-    info "[dry-run] expose node/npm/npx/corepack under \$HOME/.local/bin"
+    info "[dry-run] corepack enable"
+    info "[dry-run] corepack prepare pnpm@latest --activate"
+    info "[dry-run] expose fnm/node/npm/npx/corepack/pnpm under \$HOME/.local/bin"
     return
   fi
 
   local node24
   if ! node24="$(resolve_latest_node24)"; then
+    if has_cmd node && [[ "$(node -v 2>/dev/null || true)" == v24.* ]]; then
+      warn "Could not resolve latest Node 24 release; keeping existing $(node -v)."
+      expose_node_binaries
+      return
+    fi
     fatal "Could not resolve latest Node 24 release"
   fi
 
-  info "Installing Node.js 24: $node24"
-  fnm install "$node24"
+  if has_cmd node && [[ "$(node -v 2>/dev/null || true)" == "$node24" ]]; then
+    info "Node.js $node24 already installed"
+  else
+    info "Installing Node.js 24: $node24"
+    fnm install "$node24"
+  fi
   fnm default "$node24"
 
   if ! eval "$(fnm env --shell bash)"; then
     fatal "Could not activate fnm environment in current shell"
+  fi
+
+  if ! has_cmd corepack; then
+    fatal "corepack is unavailable after Node.js installation"
+  fi
+
+  info "Enabling pnpm via Corepack..."
+  corepack enable
+  if has_cmd timeout; then
+    if ! timeout 300 corepack prepare pnpm@latest --activate; then
+      if has_cmd pnpm; then
+        warn "Corepack pnpm update failed; keeping existing $(pnpm --version)."
+      else
+        fatal "Corepack pnpm activation failed"
+      fi
+    fi
+  elif ! corepack prepare pnpm@latest --activate; then
+    if has_cmd pnpm; then
+      warn "Corepack pnpm update failed; keeping existing $(pnpm --version)."
+    else
+      fatal "Corepack pnpm activation failed"
+    fi
+  fi
+
+  if ! has_cmd pnpm; then
+    fatal "pnpm is unavailable after Corepack activation"
   fi
 
   expose_node_binaries

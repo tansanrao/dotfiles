@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run containerized install tests across supported Linux OS images.
+# Run containerized install tests for supported Ubuntu hosts.
 
 set -euo pipefail
 
@@ -25,7 +25,7 @@ Usage: scripts/test-install-matrix.sh [options]
 
 Options:
   --suite all|root|noroot|guards   Test suite to run (default: all)
-  --images a,b,c                    Matrix subset by key (fedora,rocky9,rocky10,cs9,cs10,ubuntu2404,ubuntu2510)
+  --images a,b,c                    Matrix subset by key (ubuntu2204,ubuntu2404)
   --keep-containers                 Keep failed/success containers for debugging
   --json-report <path>              Write JSON report to path
   --max-parallel <n>                Maximum parallel jobs (currently executed sequentially)
@@ -85,33 +85,33 @@ if [[ "$MAX_PARALLEL" != "1" ]]; then
   test_warn "--max-parallel is accepted but cases currently run sequentially"
 fi
 
-declare -a MATRIX_KEYS=(fedora rocky9 rocky10 cs9 cs10 ubuntu2404 ubuntu2510)
+declare -a MATRIX_KEYS=(ubuntu2404)
+declare -a GUARD_KEYS=(ubuntu2204)
 
 image_for_key() {
   case "$1" in
-    fedora) echo "$FEDORA_IMAGE" ;;
-    rocky9) echo "$ROCKY9_IMAGE" ;;
-    rocky10) echo "$ROCKY10_IMAGE" ;;
-    cs9) echo "$CENTOS_STREAM9_IMAGE" ;;
-    cs10) echo "$CENTOS_STREAM10_IMAGE" ;;
+    ubuntu2204) echo "$UBUNTU2204_IMAGE" ;;
     ubuntu2404) echo "$UBUNTU2404_IMAGE" ;;
-    ubuntu2510) echo "$UBUNTU2510_IMAGE" ;;
     *) return 1 ;;
   esac
 }
 
-family_for_key() {
-  case "$1" in
-    fedora) echo "fedora" ;;
-    rocky9|rocky10|cs9|cs10) echo "el" ;;
-    ubuntu2404|ubuntu2510) echo "ubuntu" ;;
-    *) return 1 ;;
-  esac
+key_in_list() {
+  local needle="$1"
+  shift
+  local candidate
+  for candidate in "$@"; do
+    if [[ "$candidate" == "$needle" ]]; then
+      return 0
+    fi
+  done
+  return 1
 }
 
-select_matrix_keys() {
+select_keys() {
+  local -a defaults=("$@")
   if [[ -z "$IMAGES_FILTER" ]]; then
-    printf '%s\n' "${MATRIX_KEYS[@]}"
+    printf '%s\n' "${defaults[@]}"
     return
   fi
 
@@ -120,12 +120,12 @@ select_matrix_keys() {
   IFS=',' read -r -a chosen <<< "$IMAGES_FILTER"
   for entry in "${chosen[@]}"; do
     entry="${entry//[[:space:]]/}"
-    if [[ -z "$entry" ]]; then
-      continue
-    fi
+    [[ -n "$entry" ]] || continue
     case "$entry" in
-      fedora|rocky9|rocky10|cs9|cs10|ubuntu2404|ubuntu2510)
-        printf '%s\n' "$entry"
+      ubuntu2204|ubuntu2404)
+        if key_in_list "$entry" "${defaults[@]}"; then
+          printf '%s\n' "$entry"
+        fi
         ;;
       *)
         test_err "Unknown image key in --images: $entry"
@@ -136,9 +136,12 @@ select_matrix_keys() {
 }
 
 ROOT_CASE_SCRIPT='set -euo pipefail
-/repo/tests/container/prepare.sh "$TEST_FAMILY"
+/repo/tests/container/prepare.sh
 cd /repo
-./install.sh
+./install.sh | tee /tmp/install-first.log
+./install.sh | tee /tmp/install-second.log
+! grep -q "INFO: Installing rustup" /tmp/install-second.log || { echo "rerun attempted to reinstall rustup" >&2; exit 1; }
+! grep -q "INFO: Installing fnm" /tmp/install-second.log || { echo "rerun attempted to reinstall fnm" >&2; exit 1; }
 export PATH="$HOME/.local/bin:$HOME/.cargo/bin:${XDG_DATA_HOME:-$HOME/.local/share}/fnm:$PATH"
 semver_ge() {
   local a="${1#v}"
@@ -148,7 +151,7 @@ semver_ge() {
 need_cmd() {
   command -v "$1" >/dev/null 2>&1 || { echo "missing required command: $1" >&2; exit 1; }
 }
-for cmd in zsh tmux git fzf zoxide eza node npm cargo nvim; do
+for cmd in git zsh tmux nvim stow cargo rustup node npm corepack pnpm fzf zoxide eza; do
   need_cmd "$cmd"
 done
 node_version="$(node -v)"
@@ -160,6 +163,7 @@ fi
 nvim_version="$(nvim --version | awk "NR==1 {print \$2}")"
 nvim_version="${nvim_version#v}"
 semver_ge "$nvim_version" "0.11.2" || { echo "Neovim too old: $nvim_version" >&2; exit 1; }
+[[ -e "$HOME/.config/git/config" ]] || { echo "missing git config link" >&2; exit 1; }
 [[ -e "$HOME/.config/zsh/.zshrc" ]] || { echo "missing zsh config link" >&2; exit 1; }
 [[ -e "$HOME/.config/tmux/tmux.conf" ]] || { echo "missing tmux config link" >&2; exit 1; }
 [[ -e "$HOME/.config/nvim/init.lua" ]] || { echo "missing nvim config link" >&2; exit 1; }
@@ -167,52 +171,35 @@ semver_ge "$nvim_version" "0.11.2" || { echo "Neovim too old: $nvim_version" >&2
 [[ -d "$HOME/.local/share/tmux/plugins/tpm" ]] || { echo "missing tpm plugin" >&2; exit 1; }
 '
 
-GUARDS_CASE_SCRIPT='set -euo pipefail
-/repo/tests/container/prepare.sh "$TEST_FAMILY"
+NOROOT_CASE_SCRIPT='set -euo pipefail
+/repo/tests/container/prepare.sh
 command -v su >/dev/null 2>&1 || { echo "su is required for no-root tests" >&2; exit 1; }
 useradd -m -s /bin/bash tester >/dev/null 2>&1 || true
-set +e
-su - tester -c "cd /repo && ./install.sh --skip-plugins" >/tmp/no_root_guard.log 2>&1
-status_no_root=$?
-set -e
-[[ $status_no_root -ne 0 ]] || { echo "expected failure without --no-root" >&2; exit 1; }
-grep -q -- "--no-root" /tmp/no_root_guard.log || { cat /tmp/no_root_guard.log >&2; echo "missing no-root guidance" >&2; exit 1; }
-set +e
-su - tester -c "cd /repo && ./install.sh --no-root --skip-plugins" >/tmp/stow_guard.log 2>&1
-status_stow=$?
-set -e
-major=""
-if [[ "$TEST_FAMILY" == "el" && -f /etc/os-release ]]; then
-  . /etc/os-release
-  major="${VERSION_ID%%.*}"
-fi
-if [[ "$TEST_FAMILY" == "el" && "$major" == "10" ]]; then
-  [[ $status_stow -eq 0 ]] || { cat /tmp/stow_guard.log >&2; echo "expected EL10 success without --no-stow" >&2; exit 1; }
-else
-  [[ $status_stow -ne 0 ]] || { echo "expected failure without --no-stow" >&2; exit 1; }
-  grep -q -- "--no-stow" /tmp/stow_guard.log || { cat /tmp/stow_guard.log >&2; echo "missing no-stow guidance" >&2; exit 1; }
-fi
+su - tester -c "cd /repo && ./install.sh"
+su - tester -c "cd /repo && ./install.sh"
+su - tester -c "test -e \"\$HOME/.config/git/config\""
+su - tester -c "test -e \"\$HOME/.config/zsh/.zshrc\""
+su - tester -c "test -e \"\$HOME/.config/tmux/tmux.conf\""
+su - tester -c "test -e \"\$HOME/.config/nvim/init.lua\""
+su - tester -c "! test -e \"\$HOME/.cargo/env\""
+su - tester -c "! command -v node >/dev/null 2>&1"
+su - tester -c "! test -d \"\$HOME/.local/share/dotfiles/plugins/zsh/pure\""
+su - tester -c "! test -d \"\$HOME/.local/share/tmux/plugins/tpm\""
 '
 
-NOROOT_CASE_SCRIPT='set -euo pipefail
-/repo/tests/container/prepare.sh "$TEST_FAMILY"
-command -v su >/dev/null 2>&1 || { echo "su is required for no-root tests" >&2; exit 1; }
-useradd -m -s /bin/bash tester >/dev/null 2>&1 || true
-su - tester -c "cd /repo && ./install.sh --no-root --no-stow --skip-plugins"
-su - tester -c "export PATH=\"\$HOME/.local/bin:\$HOME/.cargo/bin:\${XDG_DATA_HOME:-\$HOME/.local/share}/fnm:\$PATH\"; command -v nvim >/dev/null"
-su - tester -c "export PATH=\"\$HOME/.local/bin:\$HOME/.cargo/bin:\${XDG_DATA_HOME:-\$HOME/.local/share}/fnm:\$PATH\"; node -v" >/tmp/node_version.txt
-node_version="$(cat /tmp/node_version.txt)"
-[[ "$node_version" == v24.* ]] || { echo "Node is not v24.x in no-root mode: $node_version" >&2; exit 1; }
-su - tester -c "export PATH=\"\$HOME/.local/bin:\$HOME/.cargo/bin:\${XDG_DATA_HOME:-\$HOME/.local/share}/fnm:\$PATH\"; nvim --version | head -n1" >/tmp/nvim_version.txt
-nvim_version="$(awk "{print \$2}" /tmp/nvim_version.txt)"
-nvim_version="${nvim_version#v}"
-semver_ge() {
-  local a="${1#v}"
-  local b="${2#v}"
-  [[ "$(printf "%s\n%s\n" "$b" "$a" | sort -V | tail -n1)" == "$a" ]]
+GUARDS_CASE_SCRIPT='set -euo pipefail
+/repo/tests/container/prepare.sh
+cd /repo
+set +e
+./install.sh --skip-plugins >/tmp/ubuntu_guard.log 2>&1
+status=$?
+set -e
+[[ $status -ne 0 ]] || { echo "expected Ubuntu <24 to be rejected" >&2; exit 1; }
+grep -q "expected major version 24 or newer" /tmp/ubuntu_guard.log || {
+  cat /tmp/ubuntu_guard.log >&2
+  echo "missing Ubuntu version guard message" >&2
+  exit 1
 }
-semver_ge "$nvim_version" "0.11.2" || { echo "Neovim too old in no-root mode: $nvim_version" >&2; exit 1; }
-su - tester -c "test -e \"\$HOME/.config/nvim/init.lua\""
 '
 
 declare -a RESULTS=()
@@ -222,8 +209,7 @@ run_case() {
   local suite_name="$1"
   local key="$2"
   local image="$3"
-  local family="$4"
-  local script_body="$5"
+  local script_body="$4"
 
   local case_id="${suite_name}-${key}"
   local log_file="$ARTIFACT_ROOT/${case_id}.log"
@@ -231,7 +217,7 @@ run_case() {
   start_ts="$(date +%s)"
 
   local container_name="dotfiles-${case_id//[^a-zA-Z0-9]/-}-${RANDOM}"
-  local docker_cmd=(docker run -i -e TEST_FAMILY="$family" -v "$REPO_ROOT:/repo:ro")
+  local docker_cmd=(docker run -i -v "$REPO_ROOT:/repo:ro")
 
   if [[ "$KEEP_CONTAINERS" != "true" ]]; then
     docker_cmd+=(--rm)
@@ -284,33 +270,36 @@ emit_json_report() {
   } > "$out_path"
 }
 
-SELECTED_KEYS=()
-while IFS= read -r key; do
-  [[ -n "$key" ]] || continue
-  SELECTED_KEYS+=("$key")
-done < <(select_matrix_keys)
+if [[ "$SUITE" == "all" || "$SUITE" == "root" || "$SUITE" == "noroot" ]]; then
+  SELECTED_KEYS=()
+  while IFS= read -r key; do
+    [[ -n "$key" ]] || continue
+    SELECTED_KEYS+=("$key")
+  done < <(select_keys "${MATRIX_KEYS[@]}")
 
-for key in "${SELECTED_KEYS[@]}"; do
-  image="$(image_for_key "$key")"
-  family="$(family_for_key "$key")"
+  for key in "${SELECTED_KEYS[@]}"; do
+    image="$(image_for_key "$key")"
+    if [[ "$SUITE" == "all" || "$SUITE" == "root" ]]; then
+      run_case "root" "$key" "$image" "$ROOT_CASE_SCRIPT"
+    fi
+    if [[ "$SUITE" == "all" || "$SUITE" == "noroot" ]]; then
+      run_case "noroot" "$key" "$image" "$NOROOT_CASE_SCRIPT"
+    fi
+  done
+fi
 
-  case "$SUITE" in
-    all)
-      run_case "root" "$key" "$image" "$family" "$ROOT_CASE_SCRIPT"
-      run_case "guards" "$key" "$image" "$family" "$GUARDS_CASE_SCRIPT"
-      run_case "noroot" "$key" "$image" "$family" "$NOROOT_CASE_SCRIPT"
-      ;;
-    root)
-      run_case "root" "$key" "$image" "$family" "$ROOT_CASE_SCRIPT"
-      ;;
-    guards)
-      run_case "guards" "$key" "$image" "$family" "$GUARDS_CASE_SCRIPT"
-      ;;
-    noroot)
-      run_case "noroot" "$key" "$image" "$family" "$NOROOT_CASE_SCRIPT"
-      ;;
-  esac
-done
+if [[ "$SUITE" == "all" || "$SUITE" == "guards" ]]; then
+  SELECTED_GUARDS=()
+  while IFS= read -r key; do
+    [[ -n "$key" ]] || continue
+    SELECTED_GUARDS+=("$key")
+  done < <(select_keys "${GUARD_KEYS[@]}")
+
+  for key in "${SELECTED_GUARDS[@]}"; do
+    image="$(image_for_key "$key")"
+    run_case "guards" "$key" "$image" "$GUARDS_CASE_SCRIPT"
+  done
+fi
 
 printf '\n%-22s %-6s %-8s %s\n' "CASE" "STATUS" "ELAPSED" "LOG"
 for row in "${RESULTS[@]}"; do
