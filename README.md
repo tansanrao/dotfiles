@@ -52,7 +52,7 @@ Privileged Ubuntu installs:
 - Rust via `rustup` stable.
 - Node.js via `fnm`, pinned to the latest `v24.x` available at install time.
 - pnpm via Corepack.
-- Neovim from upstream Linux release tarballs (`v0.11.6` target), enforcing LazyVim minimum `>= 0.11.2`.
+- Neovim from upstream Linux release tarballs (`v0.12.2` target), enforcing LazyVim minimum `>= 0.11.2`.
 
 On rerun, these steps update existing managed installs where appropriate and skip work that already satisfies the target version.
 

@@ -162,7 +162,7 @@ if ! command -v fd >/dev/null 2>&1 && ! command -v fdfind >/dev/null 2>&1; then
 fi
 nvim_version="$(nvim --version | awk "NR==1 {print \$2}")"
 nvim_version="${nvim_version#v}"
-semver_ge "$nvim_version" "0.11.2" || { echo "Neovim too old: $nvim_version" >&2; exit 1; }
+semver_ge "$nvim_version" "0.12.2" || { echo "Neovim too old: $nvim_version" >&2; exit 1; }
 [[ -e "$HOME/.config/git/config" ]] || { echo "missing git config link" >&2; exit 1; }
 [[ -e "$HOME/.config/zsh/.zshrc" ]] || { echo "missing zsh config link" >&2; exit 1; }
 [[ -e "$HOME/.config/tmux/tmux.conf" ]] || { echo "missing tmux config link" >&2; exit 1; }
