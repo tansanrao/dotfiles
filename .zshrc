@@ -26,6 +26,24 @@ setopt HIST_REDUCE_BLANKS
 setopt HIST_IGNORE_SPACE
 setopt HIST_EXPIRE_DUPS_FIRST
 
+# remove from known_hosts helper
+function rmkeys() {
+  ssh-keygen -f "$HOME/.ssh/known_hosts" -R "$1"
+}
+
+# SSH through multiple jump hosts
+function jump() {
+  if (( $# < 2 )); then
+    echo "Usage: jump host1 [host2 ... hostN]" >&2
+    return 1
+  fi
+  local -a hosts=("$@")
+  local last_host="${hosts[-1]}"
+  local -a proxies=("${hosts[@]:0:$#hosts-1}")
+  local jump_string="${(j:,:)proxies}"
+  ssh -A -J "${jump_string}" "${last_host}"
+}
+
 # fzf
 if [[ -f /opt/homebrew/opt/fzf/shell/completion.zsh ]]; then
   source /opt/homebrew/opt/fzf/shell/completion.zsh
