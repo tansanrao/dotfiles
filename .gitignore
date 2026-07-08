@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+
+# Editor state
+*.swp
+*.swo
+
+# Zed generated state
+.config/zed/prompts/
+.config/zed/**/*.mdb/
+.config/zed/**/*.mdb
+.config/zed/**/lock.mdb
+.config/zed/**/data.mdb
