@@ -1,4 +1,5 @@
 brew "container"
+brew "fnm"
 brew "fzf"
 brew "pure"
 brew "texlive"

@@ -40,6 +40,11 @@ if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh --cmd cd)"
 fi
 
+# fnm
+if command -v fnm >/dev/null 2>&1; then
+  eval "$(fnm env --use-on-cd --shell zsh)"
+fi
+
 # Pure prompt
 fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
 autoload -U promptinit
