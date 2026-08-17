@@ -7,6 +7,8 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "buffer_line_height": "standard",
+  "format_on_save": "modifications",
   "cli_default_open_behavior": "existing_window",
   "agent_servers": {
     "codex-acp": {
