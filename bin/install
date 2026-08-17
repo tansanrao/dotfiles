@@ -53,3 +53,4 @@ link_file() {
 }
 
 link_file "$repo_root/.config/zed/settings.json" "$HOME/.config/zed/settings.json"
+link_file "$repo_root/.config/ghostty/config.ghostty" "$HOME/.config/ghostty/config.ghostty"

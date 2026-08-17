@@ -1,0 +1,5 @@
+# Use Ghostty's built-in dark Ayu theme.
+theme = Ayu
+
+# Prepare interactive SSH sessions with Ghostty's environment and terminfo.
+shell-integration-features = ssh-env,ssh-terminfo
