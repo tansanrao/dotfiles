@@ -1,0 +1,41 @@
+[user]
+	name = Tanuj Ravi Rao
+	email = email@tansanrao.com
+
+[init]
+	defaultBranch = main
+
+[merge]
+	conflictStyle = zdiff3
+
+[push]
+	autoSetupRemote = true
+
+[commit]
+	verbose = true
+
+[rerere]
+	enabled = true
+
+[diff]
+	algorithm = histogram
+	submodule = log
+
+[status]
+	submoduleSummary = true
+
+[submodule]
+	recurse = true
+
+[branch]
+	sort = -committerdate
+
+[tag]
+	sort = -taggerdate
+
+[alias]
+	co = checkout
+	ci = commit
+	st = status
+	br = branch
+	hist = log --pretty=format:'%h %ad | %s%d [%an]' --graph --date=short

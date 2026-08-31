@@ -4,6 +4,7 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 "$repo_root/scripts/ubuntu/apt.sh"
+"$repo_root/scripts/git.sh"
 "$repo_root/scripts/ubuntu/fnm.sh"
 "$repo_root/scripts/ubuntu/rustup.sh"
 "$repo_root/scripts/ubuntu/swiftly.sh"
