@@ -5,3 +5,4 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 "$repo_root/scripts/macos/homebrew.sh"
 "$repo_root/scripts/macos/zsh.sh"
+"$repo_root/scripts/macos/tmux.sh"

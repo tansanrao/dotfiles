@@ -3,11 +3,17 @@ export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$XDG_DATA_HOME/fnm:$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
+
+# Swiftly
+if [[ -f "${SWIFTLY_HOME_DIR:-$XDG_DATA_HOME/swiftly}/env.sh" ]]; then
+  source "${SWIFTLY_HOME_DIR:-$XDG_DATA_HOME/swiftly}/env.sh"
+fi
 
 # Homebrew
 if [[ -x /opt/homebrew/bin/brew ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
+  [[ -d /opt/homebrew/opt/rustup/bin ]] && export PATH="/opt/homebrew/opt/rustup/bin:$PATH"
 fi
 
 # History
@@ -44,13 +50,20 @@ function jump() {
   ssh -A -J "${jump_string}" "${last_host}"
 }
 
-# fzf
-if [[ -f /opt/homebrew/opt/fzf/shell/completion.zsh ]]; then
-  source /opt/homebrew/opt/fzf/shell/completion.zsh
-fi
-
-if [[ -f /opt/homebrew/opt/fzf/shell/key-bindings.zsh ]]; then
-  source /opt/homebrew/opt/fzf/shell/key-bindings.zsh
+# fzf (new releases generate their integration; Ubuntu LTS packages ship files)
+if command -v fzf >/dev/null 2>&1; then
+  if fzf --zsh >/dev/null 2>&1; then
+    source <(fzf --zsh)
+  else
+    for fzf_script in \
+      /usr/share/doc/fzf/examples/completion.zsh \
+      /usr/share/doc/fzf/examples/key-bindings.zsh \
+      /opt/homebrew/opt/fzf/shell/completion.zsh \
+      /opt/homebrew/opt/fzf/shell/key-bindings.zsh; do
+      [[ -f "$fzf_script" ]] && source "$fzf_script"
+    done
+    unset fzf_script
+  fi
 fi
 
 # zoxide
@@ -64,9 +77,18 @@ if command -v fnm >/dev/null 2>&1; then
 fi
 
 # Pure prompt
-fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
+[[ -d "$HOME/.zsh/pure" ]] && fpath=("$HOME/.zsh/pure" $fpath)
+[[ -d /opt/homebrew/share/zsh/site-functions ]] && fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
 autoload -U promptinit
 promptinit
 if whence -w prompt_pure_setup >/dev/null 2>&1; then
   prompt pure
 fi
+
+# pnpm
+export PNPM_HOME="$XDG_DATA_HOME/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME/bin:"*) ;;
+  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
+esac
+# pnpm end
