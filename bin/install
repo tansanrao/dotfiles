@@ -2,6 +2,99 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+config_source="$repo_root/.config/mise/config.toml"
+config_dir="${MISE_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/mise}"
+config_target="${MISE_GLOBAL_CONFIG_FILE:-$config_dir/config.toml}"
+dry_run=false
+# Installation always includes the current platform's declarations.
+export MISE_AUTO_ENV=true
+
+case "${1:-}" in
+  --dry-run) dry_run=true ;;
+  --help|-h)
+    echo "Usage: $0 [--dry-run]"
+    echo "Set up macOS or Ubuntu packages, tools, shell, and dotfiles using mise."
+    echo "Installs mise 2026.10.6 if missing; an existing mise must be at least that version."
+    exit 0
+    ;;
+  "") ;;
+  *) echo "Unknown argument: $1" >&2; exit 1 ;;
+esac
+if (( $# > 1 )); then
+  echo "Usage: $0 [--dry-run]" >&2
+  exit 1
+fi
+
+case "$(uname -s)" in
+  Darwin) ;;
+  Linux)
+    if [[ ! -r /etc/os-release ]]; then
+      echo "Cannot identify this Linux distribution." >&2
+      exit 1
+    fi
+    source /etc/os-release
+    if [[ "${ID:-}" != ubuntu ]]; then
+      echo "This setup supports Ubuntu Linux (detected: ${PRETTY_NAME:-unknown})." >&2
+      exit 1
+    fi
+    ;;
+  *) echo "This setup supports macOS and Ubuntu Linux." >&2; exit 1 ;;
+esac
+if (( EUID == 0 )) && [[ -n "${SUDO_USER:-}" ]]; then
+  echo "Run as your normal user; mise invokes sudo where needed." >&2
+  exit 1
+fi
+
+if command -v mise >/dev/null 2>&1; then
+  mise_command="$(command -v mise)"
+elif [[ -x "$HOME/.local/bin/mise" ]]; then
+  mise_command="$HOME/.local/bin/mise"
+elif [[ -x /opt/homebrew/bin/mise ]]; then
+  mise_command=/opt/homebrew/bin/mise
+elif [[ -x /usr/local/bin/mise ]]; then
+  mise_command=/usr/local/bin/mise
+else
+  if [[ "$dry_run" == true ]]; then
+    echo "Would install mise 2026.10.6 into $HOME/.local/bin."
+    echo "Then apply packages, repositories, tools, dotfiles, and the login shell."
+    echo "Install mise first to preview individual resources: https://mise.jdx.dev/installing-mise.html"
+    exit 0
+  fi
+  # Only prerequisites needed to fetch mise stay outside its package declarations.
+  if ! command -v curl >/dev/null 2>&1; then
+    if [[ "$(uname -s)" != Linux ]]; then
+      echo "curl is required to install mise." >&2
+      exit 1
+    fi
+    root_command=()
+    (( EUID == 0 )) || root_command=(sudo)
+    "${root_command[@]}" apt-get update
+    "${root_command[@]}" env DEBIAN_FRONTEND=noninteractive apt-get install -y ca-certificates curl
+  fi
+  mise_installer="$(mktemp)"
+  trap 'rm -f -- "$mise_installer"' EXIT
+  curl -fsSL https://mise.run -o "$mise_installer"
+  MISE_VERSION=2026.10.6 sh "$mise_installer"
+  mise_command="$HOME/.local/bin/mise"
+fi
+
+# Check compatibility and show current dotfile state before changing links.
+# A bootstrap dotfiles dry run refuses legacy profiles before we can back them up.
+MISE_GLOBAL_CONFIG_FILE="$config_source" "$mise_command" -C "$repo_root" bootstrap --only packages,repos,tools,user --dry-run
+MISE_GLOBAL_CONFIG_FILE="$config_source" "$mise_command" -C "$repo_root" dotfiles status
+if [[ "$dry_run" == true ]]; then
+  echo "Would link: $config_target -> $config_source"
+  echo "Would link: $config_dir/miserc.toml -> $repo_root/.miserc.toml"
+  echo "Would link: $config_dir/conf.d/dotfiles -> $repo_root"
+  echo "Would link: $config_dir/mise.lock -> $repo_root/mise.lock"
+  echo "Would link: $config_dir/mise.linux.lock -> $repo_root/mise.linux.lock"
+  echo "Would link: $HOME/.zprofile -> $repo_root/.zprofile (backing up any existing file)"
+  exit 0
+fi
+
+# Install system dependencies before tools, and finish both before switching
+# shell startup files. Native declarations make repeated runs safe.
+MISE_GLOBAL_CONFIG_FILE="$config_source" "$mise_command" -C "$repo_root" bootstrap --only packages,repos,tools
 
 link_file() {
   local source="$1"
@@ -52,5 +145,13 @@ link_file() {
   echo "linked: $target -> $source"
 }
 
-link_file "$repo_root/.config/zed/settings.json" "$HOME/.config/zed/settings.json"
-link_file "$repo_root/.config/ghostty/config.ghostty" "$HOME/.config/ghostty/config.ghostty"
+link_file "$config_source" "$config_target"
+link_file "$repo_root/.miserc.toml" "$config_dir/miserc.toml"
+link_file "$repo_root" "$config_dir/conf.d/dotfiles"
+# Global modules share lockfiles in the parent config directory.
+link_file "$repo_root/mise.lock" "$config_dir/mise.lock"
+link_file "$repo_root/mise.linux.lock" "$config_dir/mise.linux.lock"
+# Adopt the new login profile with a backup of any installer-generated profile
+# (for example Swiftly's), before mise takes over its ongoing management.
+link_file "$repo_root/.zprofile" "$HOME/.zprofile"
+MISE_GLOBAL_CONFIG_FILE="$config_target" "$mise_command" -C "$repo_root" bootstrap --only dotfiles,user

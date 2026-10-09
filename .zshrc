@@ -3,17 +3,22 @@ export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
 
-export PATH="$XDG_DATA_HOME/fnm:$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
+export PATH="$HOME/.cargo/bin:$HOME/.local/bin:$PATH"
 
-# Swiftly
-if [[ -f "${SWIFTLY_HOME_DIR:-$XDG_DATA_HOME/swiftly}/env.sh" ]]; then
-  source "${SWIFTLY_HOME_DIR:-$XDG_DATA_HOME/swiftly}/env.sh"
-fi
+# Preserve pnpm-installed global commands; mise supplies pnpm itself.
+export PNPM_HOME="$XDG_DATA_HOME/pnpm"
+path=("$PNPM_HOME/bin" ${path:#"$PNPM_HOME/bin"})
 
 # Homebrew
 if [[ -x /opt/homebrew/bin/brew ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
-  [[ -d /opt/homebrew/opt/rustup/bin ]] && export PATH="/opt/homebrew/opt/rustup/bin:$PATH"
+elif [[ -x /usr/local/bin/brew ]]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+fi
+
+# Activate before integrations so they use mise's selected tool versions.
+if command -v mise >/dev/null 2>&1; then
+  eval "$(mise activate zsh)"
 fi
 
 # History
@@ -50,30 +55,14 @@ function jump() {
   ssh -A -J "${jump_string}" "${last_host}"
 }
 
-# fzf (new releases generate their integration; Ubuntu LTS packages ship files)
+# fzf's pinned mise version provides its own shell integration.
 if command -v fzf >/dev/null 2>&1; then
-  if fzf --zsh >/dev/null 2>&1; then
-    source <(fzf --zsh)
-  else
-    for fzf_script in \
-      /usr/share/doc/fzf/examples/completion.zsh \
-      /usr/share/doc/fzf/examples/key-bindings.zsh \
-      /opt/homebrew/opt/fzf/shell/completion.zsh \
-      /opt/homebrew/opt/fzf/shell/key-bindings.zsh; do
-      [[ -f "$fzf_script" ]] && source "$fzf_script"
-    done
-    unset fzf_script
-  fi
+  source <(fzf --zsh)
 fi
 
 # zoxide
 if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh --cmd cd)"
-fi
-
-# fnm
-if command -v fnm >/dev/null 2>&1; then
-  eval "$(fnm env --use-on-cd --shell zsh)"
 fi
 
 # Pure prompt
@@ -84,11 +73,3 @@ promptinit
 if whence -w prompt_pure_setup >/dev/null 2>&1; then
   prompt pure
 fi
-
-# pnpm
-export PNPM_HOME="$XDG_DATA_HOME/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME/bin:"*) ;;
-  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
-esac
-# pnpm end
