@@ -7,6 +7,67 @@
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
 {
+  "audio": {
+    
+  },
+  "ssh_connections": [
+    {
+      "host": "beekeeper-server",
+      "args": [],
+      "projects": [
+        {
+          "paths": [
+            "/home/ubuntu/work/beekeeper"
+          ]
+        },
+        {
+          "paths": [
+            "/home/ubuntu/work/beekeeper/beekeeper-paper"
+          ]
+        }
+      ]
+    },
+    {
+      "host": "x-wing",
+      "args": [],
+      "projects": [
+        {
+          "paths": [
+            "/home/tansanrao/work/5510-hw1-grading"
+          ]
+        },
+        {
+          "paths": [
+            "/home/tansanrao/work/5510-hw1-pa"
+          ]
+        }
+      ]
+    },
+    {
+      "host": "nexus-dev",
+      "args": [],
+      "projects": [
+        {
+          "paths": [
+            "/home/ubuntu/work/nexus"
+          ]
+        }
+      ]
+    },
+    {
+      "host": "falcon1.arc.vt.edu",
+      "args": [],
+      "projects": [
+        {
+          "paths": [
+            "/home/tansanrao/cmda4634"
+          ]
+        }
+      ]
+    }
+  ],
+  "buffer_line_height": "standard",
+  "diff_view_style": "split",
   "language_models": {
     "openai_compatible": {
       "Virginia Tech": {
@@ -32,15 +93,26 @@
       }
     }
   },
-  "buffer_line_height": "standard",
-  "format_on_save": "modifications",
+  "format_on_save": "modifications_if_available",
   "cli_default_open_behavior": "existing_window",
   "agent_servers": {
+    "claude-acp": {
+      "default_config_options": {
+        "effort": "high",
+        "mode": "auto",
+        "model": "opus[1m]"
+      },
+      "type": "registry"
+    },
     "amp-acp": {
       "type": "registry"
     },
     "codex-acp": {
       "default_config_options": {
+        "model": "gpt-6-astra",
+        "mode": "agent",
+        "collaboration_mode": "default",
+        "reasoning_effort": "medium",
         "fast-mode": true
       },
       "type": "registry"
@@ -54,16 +126,28 @@
   "document_folding_ranges": "on",
   "semantic_tokens": "combined",
   "edit_predictions": {
+    "allow_data_collection": "no",
     "mode": "subtle",
     "provider": "copilot"
   },
   "agent": {
-    "default_profile": "ask",
+    "sandbox_permissions": {
+      "network_hosts": [
+        "www.cs.umb.edu",
+        "www.vldb.org",
+        "www.microsoft.com",
+        "www.postgresql.org",
+        "api.crossref.org",
+        "docs.ebpf.io"
+      ]
+    },
+    "default_profile": "write",
     "default_model": {
-      "provider": "Virginia Tech",
-      "model": "Kimi-K3",
+      "speed": "fast",
+      "provider": "openai-subscribed",
+      "model": "gpt-6.1-sol",
       "enable_thinking": true,
-      "effort": "low"
+      "effort": "medium"
     },
     "dock": "right",
     "button": true,
@@ -71,7 +155,7 @@
     "model_parameters": []
   },
   "collaboration_panel": {
-    "button": false
+    "button": true
   },
   "outline_panel": {
     "dock": "left"
@@ -94,4 +178,42 @@
     "light": "Ayu Light",
     "dark": "Ayu Dark",
   },
+  "lsp": {
+    "texlab": {
+      "settings": {
+        "texlab": {
+          "build": {
+            "onSave": true,
+            "forwardSearchAfter": true
+          },
+          "forwardSearch": {
+            "executable": "/Applications/Skim.app/Contents/SharedSupport/displayline",
+            "args": ["-g", "-r", "%l", "%p", "%f"]
+          }
+        }
+      }
+    },
+    "tinymist": {
+      "initialization_options": {
+        // Enable background preview
+        // Server will be running on 127.0.0.1:23635
+        "preview": {
+          "background": {
+            "enabled": true,
+          }
+        },
+      },
+      "settings": {
+        // Compile on save
+        // This will compile a PDF for the `main.typ` file in the project root.
+        "exportPdf": "onSave",
+        "outputPath": "$root/$name",
+        // Enable formatter
+        "formatterMode": "typstyle",
+        "formatterProseWrap": true,
+        "formatterPrintWidth": 80
+      }
+    }
+  },
+
 }
