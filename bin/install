@@ -25,21 +25,6 @@ if (( $# > 1 )); then
   exit 1
 fi
 
-case "$(uname -s)" in
-  Darwin) ;;
-  Linux)
-    if [[ ! -r /etc/os-release ]]; then
-      echo "Cannot identify this Linux distribution." >&2
-      exit 1
-    fi
-    source /etc/os-release
-    if [[ "${ID:-}" != ubuntu ]]; then
-      echo "This setup supports Ubuntu Linux (detected: ${PRETTY_NAME:-unknown})." >&2
-      exit 1
-    fi
-    ;;
-  *) echo "This setup supports macOS and Ubuntu Linux." >&2; exit 1 ;;
-esac
 if (( EUID == 0 )) && [[ -n "${SUDO_USER:-}" ]]; then
   echo "Run as your normal user; mise invokes sudo where needed." >&2
   exit 1
@@ -62,7 +47,7 @@ else
   fi
   # Only prerequisites needed to fetch mise stay outside its package declarations.
   if ! command -v curl >/dev/null 2>&1; then
-    if [[ "$(uname -s)" != Linux ]]; then
+    if ! command -v apt-get >/dev/null 2>&1; then
       echo "curl is required to install mise." >&2
       exit 1
     fi
