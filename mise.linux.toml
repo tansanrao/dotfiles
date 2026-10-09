@@ -1,0 +1,36 @@
+# Linux uses swift.org's toolchain. macOS keeps the Swift supplied by Xcode.
+[tools]
+swift = "6.4.0"
+
+[bootstrap.packages]
+"apt:build-essential" = "latest"
+"apt:ca-certificates" = "latest"
+"apt:curl" = "latest"
+"apt:git" = "latest"
+"apt:gnupg" = "latest"
+"apt:tmux" = "latest"
+"apt:unzip" = "latest"
+"apt:zsh" = "latest"
+
+# Swift's Ubuntu dependencies; build-essential supplies GCC's development libs.
+# https://www.swift.org/install/linux/tarball/
+"apt:binutils" = "latest"
+"apt:libc6-dev" = "latest"
+"apt:libcurl4-openssl-dev" = "latest"
+"apt:libedit2" = "latest"
+"apt:libncurses-dev" = "latest"
+"apt:libpython3-dev" = "latest"
+"apt:libsqlite3-0" = "latest"
+"apt:libxml2-dev" = "latest"
+"apt:libz3-dev" = "latest"
+"apt:pkg-config" = "latest"
+"apt:tzdata" = "latest"
+"apt:zip" = "latest"
+"apt:zlib1g-dev" = "latest"
+
+[bootstrap.repos]
+# Pure v1.28.4, pinned to its release commit.
+"~/.zsh/pure" = { url = "https://github.com/sindresorhus/pure.git", ref = "cac55d0b531a0db72294c9bba9453dfa6374c59d" }
+
+[bootstrap.user]
+login_shell = "/bin/zsh"

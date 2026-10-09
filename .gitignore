@@ -5,6 +5,16 @@
 *.swp
 *.swo
 
+# Machine-specific mise configuration and lockfiles
+.miserc.local.toml
+mise.local.toml
+mise.*.local.toml
+mise.local.lock
+mise.*.local.lock
+.config/mise/config.local.toml
+.config/mise/config.*.local.toml
+.config/mise/miserc.local.toml
+
 # Zed generated state
 .config/zed/prompts/
 .config/zed/**/*.mdb/

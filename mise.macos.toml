@@ -1,0 +1,19 @@
+# Machine-wide software; versioned CLI tools live in mise.toml's [tools].
+[bootstrap.packages]
+"brew:container" = "latest"
+"brew:pure" = "latest"
+"brew:texlive" = "latest"
+"brew:tmux" = "latest"
+
+"brew-cask:discord" = "latest"
+"brew-cask:ghostty" = "latest"
+"brew-cask:logi-options+" = "latest"
+"brew-cask:slack" = "latest"
+"brew-cask:obsidian" = "latest"
+"brew-cask:zotero" = "latest"
+"brew-cask:zoom" = "latest"
+"brew-cask:1password" = "latest"
+"brew-cask:tailscale-app" = "latest"
+"brew-cask:zed" = "latest"
+"brew-cask:rectangle" = "latest"
+"brew-cask:skim" = "latest"

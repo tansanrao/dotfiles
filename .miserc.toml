@@ -1,0 +1,2 @@
+# Config discovery runs before mise.toml is read.
+auto_env = true
