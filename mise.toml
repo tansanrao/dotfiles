@@ -12,6 +12,7 @@ rust = { version = "1.97.1", profile = "default" }
 fzf = "0.74.4"
 zoxide = "0.10.0"
 typst = "0.15.1"
+ripgrep = "15.2.0"
 
 # bin/install exposes this checkout as a global conf.d directory module.
 # Sources resolve within that module, including when the checkout is relocated.
