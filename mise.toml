@@ -6,9 +6,9 @@ idiomatic_version_file_enable_tools = ["node", "rust", "swift"]
 # Preserve the versions used before migration. Rust continues to use the
 # existing ~/.cargo and ~/.rustup directories, including installed binaries.
 [tools]
-node = "24.19.0"
-pnpm = "11.23.0"
-rust = { version = "1.97.1", profile = "default" }
+node = "24.21.0"
+pnpm = "12.11.2"
+rust = { version = "1.99.0", profile = "default" }
 fzf = "0.74.4"
 zoxide = "0.10.0"
 typst = "0.15.1"
