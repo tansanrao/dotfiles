@@ -17,3 +17,73 @@
 "brew-cask:zed" = "latest"
 "brew-cask:rectangle" = "latest"
 "brew-cask:skim" = "latest"
+
+# macOS: both editor and terminal variants, all weights and both widths.
+# Unhinted is the upstream recommendation for macOS/HiDPI displays.
+[tools."github:ahatem/IoskeleyMono"]
+version = "2.1.0"
+os = ["macos"]
+asset_pattern = "IoskeleyMono.zip"
+additional_asset_patterns = ["IoskeleyMono-Term.zip"]
+strip_components = 0
+# Fonts have no executable; keep the fonts themselves off PATH.
+bin_path = "bin"
+postinstall = { when = "always", run = '''
+set -eu
+font_dir="${IOSKELEY_FONT_DIR:-$HOME/Library/Fonts}"
+mkdir -p "$font_dir" "$MISE_TOOL_INSTALL_PATH/bin"
+# Validate both packages before touching installed fonts.
+for family in IoskeleyMono IoskeleyMonoTerm; do
+  test -f "$MISE_TOOL_INSTALL_PATH/Normal/Unhinted/$family-Regular.ttf"
+done
+for width in Normal SemiCondensed; do
+  for font in "$MISE_TOOL_INSTALL_PATH/$width/Unhinted/"*.ttf; do
+    test -f "$font"
+    target="$font_dir/${font##*/}"
+    owned=false
+    if [ -f "$font_dir/.ioskeley-mise-files" ]; then
+      while IFS= read -r name; do
+        if [ "$name" = "${font##*/}" ]; then owned=true; break; fi
+      done < "$font_dir/.ioskeley-mise-files"
+    fi
+    if [ -e "$target" ] && [ ! -L "$target" ] && [ "$owned" = false ]; then
+      echo "Refusing to replace unmanaged font: $target (remove its Homebrew cask first)" >&2
+      exit 1
+    fi
+  done
+done
+# macOS does not automatically discover symlinks here; install actual copies.
+staging=$(mktemp -d "$font_dir/.ioskeley-mise.XXXXXX")
+trap 'rm -rf "$staging"' EXIT
+for width in Normal SemiCondensed; do
+  for font in "$MISE_TOOL_INSTALL_PATH/$width/Unhinted/"*.ttf; do
+    name="${font##*/}"
+    cp "$font" "$staging/$name"
+    mv -f "$staging/$name" "$font_dir/$name"
+    printf '%s\n' "$name" >> "$staging/manifest"
+  done
+done
+mv -f "$staging/manifest" "$font_dir/.ioskeley-mise-files"
+# Register with Font Book's persistent user scope so apps see every style.
+# Swift is supplied by the Xcode command line tools used by Homebrew.
+/usr/bin/swift -module-cache-path "$MISE_TOOL_INSTALL_PATH/.swift-cache" - "$font_dir" <<'SWIFT'
+import Foundation
+import CoreText
+let directory = URL(fileURLWithPath: CommandLine.arguments[1])
+let manifest = try String(contentsOf: directory.appendingPathComponent(".ioskeley-mise-files"), encoding: .utf8)
+for name in manifest.split(separator: "\n") {
+    let url = directory.appendingPathComponent(String(name))
+    var error: Unmanaged<CFError>?
+    if !CTFontManagerRegisterFontsForURL(url as CFURL, .persistent, &error) {
+        if let error = error {
+            let detail = error.takeRetainedValue()
+            // 105: already registered, as expected on repeat installs.
+            if CFErrorGetCode(detail) != 105 {
+                fputs("Font registration failed: \(detail)\n", stderr)
+                exit(1)
+            }
+        } else { exit(1) }
+    }
+}
+SWIFT
+'''}
