@@ -1,7 +1,7 @@
 # Use Ghostty's built-in dark Ayu theme.
 theme = dark:Ayu, light:Ayu Light
 
-font-family = "Lilex"
+font-family = "Ioskeley Mono Term"
 
 # General stuff
 quit-after-last-window-closed = true
