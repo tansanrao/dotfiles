@@ -1,6 +1,4 @@
-# Use Ghostty's built-in dark Ayu theme.
-theme = dark:Ayu, light:Ayu Light
-
+# use the poor people's Berkeley Mono
 font-family = "Ioskeley Mono Term"
 
 # General stuff

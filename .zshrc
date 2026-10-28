@@ -55,6 +55,20 @@ function jump() {
   ssh -A -J "${jump_string}" "${last_host}"
 }
 
+# Initialize all available completions before shell integrations.
+[[ -d "$HOME/.zsh/pure" ]] && fpath=("$HOME/.zsh/pure" $fpath)
+[[ -d /opt/homebrew/share/zsh/site-functions ]] && fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
+autoload -Uz compinit
+compinit
+
+# Generate completions from the active uv version.
+if command -v uv >/dev/null 2>&1; then
+  eval "$(uv generate-shell-completion zsh)"
+fi
+if command -v uvx >/dev/null 2>&1; then
+  eval "$(uvx --generate-shell-completion zsh)"
+fi
+
 # fzf's pinned mise version provides its own shell integration.
 if command -v fzf >/dev/null 2>&1; then
   source <(fzf --zsh)
@@ -66,8 +80,6 @@ if command -v zoxide >/dev/null 2>&1; then
 fi
 
 # Pure prompt
-[[ -d "$HOME/.zsh/pure" ]] && fpath=("$HOME/.zsh/pure" $fpath)
-[[ -d /opt/homebrew/share/zsh/site-functions ]] && fpath=(/opt/homebrew/share/zsh/site-functions $fpath)
 autoload -U promptinit
 promptinit
 if whence -w prompt_pure_setup >/dev/null 2>&1; then

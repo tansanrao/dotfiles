@@ -102,9 +102,9 @@
   "agent_servers": {
     "claude-acp": {
       "default_config_options": {
-        "effort": "high",
+        "effort": "medium",
         "mode": "auto",
-        "model": "opus[1m]"
+        "model": "opus"
       },
       "type": "registry"
     },
@@ -113,10 +113,10 @@
     },
     "codex-acp": {
       "default_config_options": {
-        "model": "gpt-6-astra",
+        "model": "gpt-6.1-sol",
         "mode": "agent",
         "collaboration_mode": "default",
-        "reasoning_effort": "medium",
+        "reasoning_effort": "high",
         "fast-mode": true
       },
       "type": "registry"
@@ -168,7 +168,11 @@
     "bold_folder_labels": true,
     "dock": "left"
   },
-  "icon_theme": "Zed (Default)",
+  "icon_theme": {
+    "mode": "light",
+    "light": "Zed (Default)",
+    "dark": "Zed (Default)"
+  },
   "telemetry": {
     "diagnostics": false,
     "metrics": false,
@@ -179,8 +183,8 @@
   "buffer_font_size": 15.0,
   "theme": {
     "mode": "system",
-    "light": "Ayu Light",
-    "dark": "Ayu Dark",
+    "light": "Solarized Light",
+    "dark": "Solarized Dark",
   },
   "lsp": {
     "texlab": {
