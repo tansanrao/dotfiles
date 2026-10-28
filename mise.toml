@@ -6,6 +6,8 @@ idiomatic_version_file_enable_tools = ["node", "rust", "swift", "python"]
 python.uv_venv_auto = "source"
 
 [tool_alias]
+# Use one backend on macOS and Linux regardless of registry defaults.
+eza = "vfox:jdx/vfox-eza"
 # Native release archives on macOS and Linux; avoids AppImage/FUSE on Linux.
 neovim = "aqua:neovim/neovim"
 
