@@ -21,6 +21,9 @@ if command -v mise >/dev/null 2>&1; then
   eval "$(mise activate zsh)"
 fi
 
+# Use mise's eza for interactive directory listings on macOS and Linux.
+alias ls='eza'
+
 # History
 HISTFILE="$XDG_STATE_HOME/zsh/history"
 HISTSIZE=500000

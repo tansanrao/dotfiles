@@ -16,6 +16,7 @@ node = "24"
 pnpm = "12"
 rust = { version = "1.99", profile = "default" }
 fzf = "0.74.4"
+eza = "0.23.5"
 zoxide = "0.10.0"
 typst = "0.15.1"
 ripgrep = "15.2.0"
