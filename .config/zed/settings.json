@@ -113,10 +113,10 @@
     },
     "codex-acp": {
       "default_config_options": {
-        "model": "gpt-6.1-sol",
+        "model": "gpt-6-astra",
         "mode": "agent",
         "collaboration_mode": "default",
-        "reasoning_effort": "high",
+        "reasoning_effort": "medium",
         "fast-mode": true
       },
       "type": "registry"
@@ -183,8 +183,8 @@
   "buffer_font_size": 15.0,
   "theme": {
     "mode": "system",
-    "light": "Solarized Light",
-    "dark": "Solarized Dark",
+    "light": "Ayu Light",
+    "dark": "Ayu Dark",
   },
   "lsp": {
     "texlab": {

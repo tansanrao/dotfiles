@@ -4,7 +4,7 @@ return {
     opts = {
       servers = {
         harper_ls = {
-          filetypes = { "markdown" },
+          filetypes = { "markdown", "typst" },
           settings = {
             ["harper-ls"] = {
               linters = { SpellCheck = true },

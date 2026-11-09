@@ -1,5 +1,15 @@
 return {
-  { "projekt0n/github-nvim-theme", name = "github-theme", lazy = true },
+  {
+    "projekt0n/github-nvim-theme",
+    name = "github-theme",
+    lazy = true,
+    opts = {
+      options = {
+        -- Let Rex's pane background and transparency show through.
+        transparent = true,
+      },
+    },
+  },
   {
     "LazyVim/LazyVim",
     opts = {
