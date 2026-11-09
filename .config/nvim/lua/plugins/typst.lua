@@ -19,6 +19,22 @@ local function main_file(path)
   end
 end
 
+-- Opens or closes the rex-typst preview pane for the Rex pane Neovim runs in.
+local function toggle_rex_preview()
+  local block = vim.env.REX_BLOCK
+  if not block then
+    vim.notify("Typst preview needs Neovim running in a Rex pane", vim.log.levels.WARN)
+    return
+  end
+  vim.system({ "rex", "do", "-b", block, "typst_toggle" }, { text = true }, function(r)
+    if r.code ~= 0 then
+      vim.schedule(function()
+        vim.notify("rex-typst: " .. vim.trim(r.stderr ~= "" and r.stderr or r.stdout), vim.log.levels.ERROR)
+      end)
+    end
+  end)
+end
+
 return {
   {
     "neovim/nvim-lspconfig",
@@ -36,6 +52,13 @@ return {
       },
     },
     init = function()
+      -- <leader>cp toggles the rex-typst preview beside this Neovim pane.
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = "typst",
+        callback = function(args)
+          vim.keymap.set("n", "<leader>cp", toggle_rex_preview, { buffer = args.buf, desc = "Toggle Typst Preview (Rex)" })
+        end,
+      })
       -- Pin the main file so a section file is checked as part of the whole
       -- document: its citations and cross-references resolve.
       vim.api.nvim_create_autocmd("LspAttach", {
@@ -55,18 +78,8 @@ return {
       })
     end,
   },
-  {
-    "chomosuke/typst-preview.nvim",
-    opts = {
-      -- Relative to Neovim's working directory (the project root).
-      extra_args = { "--font-path=fonts" },
-      -- Tinymist's partial rendering (experimental) can leave stale pages
-      -- drawn over others, e.g. the last page on top of page 1.
-      partial_rendering = false,
-      -- Preview the whole paper when opened from a section file.
-      get_main_file = function(path)
-        return main_file(path) or path
-      end,
-    },
-  },
+  -- Previews come from rex-typst in a Rex pane (see ~/.config/rex/init.lua),
+  -- which follows the cursor and compiles unsaved buffers. Replaces
+  -- typst-preview.nvim's browser preview.
+  { "chomosuke/typst-preview.nvim", enabled = false },
 }
